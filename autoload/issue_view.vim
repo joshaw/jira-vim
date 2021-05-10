@@ -52,7 +52,7 @@ function s:format_issue(issue, opts) abort
 		\ a:issue.key,
 		\ a:issue.fields.issuetype.name,
 		\ watching,
-	\)
+	\ )
 
 	let dates = printf("%s (updated %s)",
 		\ s:date(a:issue.fields.created),
@@ -205,7 +205,16 @@ function s:format_issue(issue, opts) abort
 		let body = [""]
 		if has_key(a:opts, "edit_comment")
 			let header_text = "Edit comment"
-			let body = split(a:opts.edit_comment, "\n")
+
+			let comment_to_edit = filter(
+				\ copy(a:issue.fields.comment.comments),
+				\ {k,v -> v.id == a:opts.edit_comment}
+			\ )
+			if !empty(comment_to_edit)
+				let comment_to_edit = comment_to_edit[0].body
+			endif
+
+			let body = split(comment_to_edit, "\n")
 		endif
 
 		let comment_entry = [
@@ -245,31 +254,48 @@ function s:format_issue(issue, opts) abort
 endfunction
 
 function issue_view#load(key, opts) abort
-	if empty(win_findbuf(g:jira_issue_buffer))
-		return
-	endif
-
 	if match(a:key, '^\u\+-\d\+$') !=# 0
 		echoerr "Invalid issue key, " . a:key
 		return
 	endif
 
-	function! s:view_issue_callback(data) abort closure
-		let issue = s:format_issue(a:data, a:opts)
+	let orig_win = winnr()
 
-		call setbufvar(g:jira_issue_buffer, "&modifiable", 1)
-		silent call deletebufline(g:jira_issue_buffer, 1, "$")
-		call setbufline(g:jira_issue_buffer, 1, issue)
-		call setbufvar(g:jira_issue_buffer, "&modifiable", 0)
-		call setbufvar(g:jira_issue_buffer, "&modified", 0)
-		call setbufvar(g:jira_issue_buffer, "&buftype", "nofile")
-		call setbufvar(g:jira_issue_buffer, "jira_key", a:key)
+	exe g:jira_issue_win . "wincmd w"
+	silent exe printf("edit%s +3 jira://%s", get(a:opts, "reload", 0) ? "!" : "", a:key)
+	call issue_view#setup()
+	exe orig_win . "wincmd w"
+endfunction
+
+function issue_view#read_cmd(file) abort
+	let key = matchstr(a:file, 'jira://\zs\u\+-\d\+')
+	let buf_nr = bufnr()
+
+	if v:cmdbang
+		unlet! b:jira_comment_id
+	endif
+
+	let opts = {}
+	let comment_id = get(b:, "jira_comment_id", -2)
+	if  comment_id == -1
+		let opts.add_comment = 1
+	elseif comment_id > 0
+		let opts.edit_comment = comment_id
+	endif
+
+	function! s:view_issue_callback(data) abort closure
+		let issue = s:format_issue(a:data, opts)
+
+		call setbufvar(buf_nr, "&modifiable", 1)
+		silent call deletebufline(buf_nr, 1, "$")
+		call setbufline(buf_nr, 1, issue)
+		call setbufvar(buf_nr, "jira_key", key)
 	endfunction
 
 	call api#get_issue(
 		\ {data -> s:view_issue_callback(data)},
-		\ a:key,
-		\ get(a:opts, "reload", 0),
+		\ key,
+		\ v:cmdbang,
 	\ )
 endfunction
 
@@ -309,6 +335,8 @@ function s:save_post_comment(key) abort
 		\ comment,
 		\ b:jira_comment_id,
 	\ )
+
+	unlet! b:jira_comment_id
 endfunction
 
 function s:do_transition(key, ...) abort
@@ -335,9 +363,10 @@ function s:do_transition(key, ...) abort
 endfunction
 
 function s:do_comment(key) abort
+	let b:jira_comment_id = -1
+
 	call issue_view#load(a:key, {"add_comment": ""})
 
-	let b:jira_comment_id = -1
 	call search("^-- Add comment: --------")
 	normal 2j
 	setlocal modifiable
@@ -346,9 +375,10 @@ endfunction
 
 function s:edit_comment(key) abort
 	function! s:_edit_commit(comment) abort closure
-		call issue_view#load(a:key, {"edit_comment": a:comment.body})
-
 		let b:jira_comment_id = a:comment.id
+
+		call issue_view#load(a:key, {"edit_comment": a:comment.id})
+
 		call search("^-- Edit comment: --------")
 		normal 2j
 		setlocal modifiable
@@ -382,7 +412,7 @@ function s:list_watchers(key) abort
 		\ )
 	endfunction
 
-	call api#get_watchers({watchers -> s:_list_watchers(d)}, a:key)
+	call api#get_watchers({watchers -> s:_list_watchers(watchers)}, a:key)
 endfunction
 
 function s:assign_issue_to_sprint(key) abort
@@ -531,6 +561,7 @@ function issue_view#setup() abort
 	setlocal formatoptions=roqn
 	setlocal nolist
 	setlocal nomodifiable
+	setlocal nomodified
 	setlocal nonumber
 	setlocal noswapfile
 	setlocal signcolumn=yes:1
@@ -565,8 +596,6 @@ function issue_view#setup() abort
 		\ start='^-- Edit comment: --*$'
 		\ end='^-- End of comment --*$'
 
-	nnoremap <buffer> <silent> <tab> :call utils#goto_buffer(g:jira_list_buffer)<CR>
-	nnoremap <buffer> q :qa!<CR>
 	nnoremap <buffer> <silent> R :call issue_view#load(b:jira_key, {"reload": 1})<CR>
 	nnoremap <buffer> <silent> <CR> :call <SID>preview_issue_under_cursor()<CR>
 	nnoremap <buffer> <silent> <C-]> :call <SID>load_issue_under_cursor()<CR>

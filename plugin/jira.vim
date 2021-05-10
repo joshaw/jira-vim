@@ -6,6 +6,14 @@ let b:cached_line = -1
 let g:jira_list_buffer = -1
 let g:jira_issue_buffer = -1
 
+augroup Jira
+	autocmd!
+	autocmd BufReadCmd jira://* :call issue_view#read_cmd(expand('<afile>'))
+augroup END
+
+"nnoremap <silent> <tab> :wincmd w<CR>
+nnoremap q :qa!<CR>
+
 function Jira(...) abort
 	" List Window
 	let g:jira_list_buffer = bufadd("jira-list-view")
@@ -16,6 +24,7 @@ function Jira(...) abort
 	else
 		call win_gotoid(list_win[0])
 	endif
+	let g:jira_list_win = winnr()
 	call list_view#setup()
 
 	" Issue Window
@@ -26,6 +35,7 @@ function Jira(...) abort
 	else
 		call win_gotoid(issue_win[0])
 	endif
+	let g:jira_issue_win = winnr()
 	call issue_view#setup()
 
 	" Back to List Window

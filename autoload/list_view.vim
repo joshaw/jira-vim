@@ -223,8 +223,6 @@ function list_view#setup() abort
 
 	nnoremap <buffer> <CR> :call <SID>handle_enter()<CR>
 	inoremap <buffer> <CR> <Esc>:call <SID>handle_enter()<CR>
-	nnoremap <buffer> q :qa!<CR>
-	nnoremap <buffer> <silent> <tab> :call utils#goto_buffer(g:jira_issue_buffer)<CR>
 	nnoremap <buffer> R :call issue_view#load(utils#get_key(), {"reload": 1})<CR>
 	nnoremap <buffer> zv :call issue_view#toggle()<CR>
 	nnoremap <buffer> gx :call system(["xdg-open", utils#get_issue_url(utils#get_key())])<CR>
@@ -241,7 +239,7 @@ function list_view#setup() abort
 
 	augroup jira
 		autocmd!
-		autocmd CursorMoved <buffer> call <SID>handle_cursor_moved()
+		autocmd CursorMoved <buffer> ++nested call <SID>handle_cursor_moved()
 		autocmd InsertEnter <buffer> call <SID>handle_insert_enter()
 	augroup END
 endfunction
