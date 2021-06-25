@@ -1,0 +1,147 @@
+*jira.txt* Jira client for vim
+
+                                                *jira*
+INTRODUCTION
+
+A client for Jira in vim. Basically just uses vim as a UI framework for
+navigating Jira. Does not try to replicate all Jira functionality!
+
+COMMANDS
+
+                                                *:Jira*
+:Jira [query]           Populate the issue list (list-view) with the results 
+                        of the given query. If no query is given, the user's
+                        configured default query is used.
+
+                                                *:JiraToggleIssueView*
+:JiraToggleIssueView    Toggle the issue view window.
+
+
+ISSUE LIST
+
+The issue list shows the results of the most recent query. It summarises the
+list of issues and is used to navigate between issues.
+
+                                                *:JiraQuery*
+:JiraQuery              Perform a query using one of the user's configured
+                        saved queries. Support tab completion.
+                        See |jira_saved_queries|.
+
+                                                *:JiraCacheSummary*
+:JiraCacheSummary       Show a summary of the cache directory (by default set
+                        to `$XDG_CACHE_HOME/jira`), size, number of files.
+
+:JiraCreateIssue        Non-funcional!
+
+                                                *jira_issue-list_maps*
+MAPS
+
+<CR>                    If the cursor is on the query line, execute the query
+                        and populate the issue list.
+
+
+ISSUE VIEW
+
+The issue view shows a single issue and allows interacting and modifying it.
+There are a number of commands that either show additional information about
+the currently viewed issue or modify that issue in some way.
+
+                                                *:JiraAssignToEpic*
+:JiraAssignToEpic       Assign the issue to an epic. The user will be prompted
+                        to choose the board that the target epic exists on and
+                        then the epic to assign the issue to.
+
+                                                *:JiraAssignToSprint*
+:JiraAssignToSprint     Assign to a sprint. Same as assigning to epics.
+
+                                                *:JiraChangeType*
+:JiraChangeType         Change the Jira-type of the issue. Will query Jira to
+                        find the acceptable types for the issue.
+
+                                                *:JiraClaim*
+:JiraClaim              Assign the issue to the currently authenticated user
+                        ("claim this issue as mine!")
+
+                                                *:JiraEditComment*
+:JiraEditComment        Edit the contents of a specific comment on this issue.
+                        The user will be prompted to choose the issue to edit.
+
+                                                *:JiraEditSummary*
+:JiraEditSummary        Modify the summary of the current issue.
+
+                                                *:JiraLink*
+:JiraLink [issue]       Link the currently viewed issue to another. If a valid
+                        issue key is provided, that is the link target,
+                        otherwise the user is prompted.
+
+                                                *:JiraStart*
+:JiraStart              A shortcut for running
+>
+                            JiraClaim
+                            JiraTransition In Progress
+<
+                                                *:JiraTransition*
+:JiraTransition [state] Transition the currently viewed issue to a different
+                        state. If no state is given, the user will be prompted
+                        to choose from a list of valid transition states.
+
+                                                *:JiraUpdateUserCache*
+:JiraUpdateUserCache    Download the list of currently active users for use in
+                        formatting issues that contain user references.
+
+                                                *:JiraWatch*
+:JiraWatch              Add the currently authenticated user as a watcher.
+
+                                                *:JiraWatchers*
+:JiraWatchers           List the watchers of the current issue.
+
+
+                                                *jira_issue-view_maps*
+MAPS
+
+                                                *:jira_<CR>*
+<CR>                    When the cursor is over a valid Jira issue key, show a
+                        summary of that issue.
+
+                                                *:jira_<C-O>*
+<C-O>                   When the cursor is over a valid Jira issue key, load
+                        that issue in the issue view.
+
+                                                *:jira_<C-R>*
+<C-R>                   Reload the current issue.
+
+
+CONFIGURATION
+
+The only neccessary configuration is to configure the API URL for the instance
+of Jira to connect to and to authenticate with that Jira instance. This
+requires a username and API key. Put these in your vimrc or some other file
+that is sourced.
+>
+    let g:jira_username = "<username>"
+    let g:jira_password = "<password>"
+    let g:jira_base_url = "<base_url>" " eg https://example.atlassian.net
+<
+Other optional configuration:
+
+Manually override the directory for caching data (will be created if it
+doesn't already exist):
+>
+    let g:jira_cache_dir = "/path/to/dir"
+<
+                                                *jira_saved_queries*
+SAVED QUERIES
+
+Saved queries are queries that are saved in your vimrc file or similar and can
+be loaded and run without typing them out in full. To create saved queries,
+populate a dictionary variable called `g:jira_saved_queries`. If the
+dictionary has a `default` key, that will be used as the default query when no
+other is given. Eg:
+>
+    let g:jira_saved_queries = {
+        "default": "project = EX AND status != Done AND assignee IN (currentUser(), empty)",
+        "mine": "assignee = currentUser() AND status != Done",
+        "done": "project = AB AND status = Done ORDER BY created DESC",
+        "recent": "project = BLA AND updated > -1d ORDER BY updated",
+    }
+<
