@@ -1,4 +1,4 @@
-function s:geneneric_choose(callback, prompt, data, f_filter, f_sort, f_format) abort
+function choose#generic(callback, prompt, data, f_filter, f_sort, f_format) abort
 	if len(a:data) == 0
 		echo "None to choose from"
 		return
@@ -25,7 +25,7 @@ function s:geneneric_choose(callback, prompt, data, f_filter, f_sort, f_format) 
 endfunction
 
 function choose#comment(callback, comments) abort
-	call s:geneneric_choose(
+	call choose#generic(
 		\ a:callback,
 		\ "Choose comment",
 		\ reverse(a:comments),
@@ -35,9 +35,8 @@ function choose#comment(callback, comments) abort
 	\ )
 endfunction
 
-
 function choose#board(callback) abort
-	call api#get_boards({boards -> s:geneneric_choose(
+	call api#get_boards({boards -> choose#generic(
 		\ a:callback,
 		\ "Choose board",
 		\ boards.values,
@@ -48,7 +47,7 @@ function choose#board(callback) abort
 endfunction
 
 function choose#sprint(callback, board_id) abort
-	call api#get_sprints({sprints -> s:geneneric_choose(
+	call api#get_sprints({sprints -> choose#generic(
 		\ a:callback,
 		\ "Choose sprint",
 		\ sprints.values,
@@ -59,7 +58,7 @@ function choose#sprint(callback, board_id) abort
 endfunction
 
 function choose#epic(callback, board_id) abort
-	call api#get_epics({epics -> s:geneneric_choose(
+	call api#get_epics({epics -> choose#generic(
 		\ a:callback,
 		\ "Choose epic",
 		\ epics.values,
@@ -77,7 +76,7 @@ function choose#link_type(callback) abort
 			call add(links, [link.id, link.outward, "outward", link.name])
 		endfor
 
-		call s:geneneric_choose(
+		call choose#generic(
 			\ a:callback, "Choose link type", links, 0, 0, {v -> v[1]},
 		\ )
 	endfunction
@@ -86,13 +85,13 @@ function choose#link_type(callback) abort
 endfunction
 
 function choose#issue_type(callback, types) abort
-	call s:geneneric_choose(
+	call choose#generic(
 		\ a:callback, "Choose new issue type", a:types, 0, 0, {v -> v.name},
 	\ )
 endfunction
 
 function choose#transition(callback, transitions) abort
-	call s:geneneric_choose(
+	call choose#generic(
 		\ a:callback, "Transition to", a:transitions, 0, 0, {v -> v.name},
 	\ )
 endfunction

@@ -1,14 +1,11 @@
 " Jira API functions ------------------------
-let s:atlassian_url = "https://exonar.atlassian.net/rest/api/2"
-let s:agile_url = "https://exonar.atlassian.net/rest/agile/1.0"
-
 let s:jobid = -1
 
 function s:jira_curl(callback, url, ...) abort
 	if a:url =~? '^https\?://'
 		let full_url = a:url
 	else
-		let full_url = s:atlassian_url . a:url
+		let full_url = utils#get_atlassian_url() . a:url
 	endif
 
 	let full_cmd = [
@@ -18,7 +15,7 @@ function s:jira_curl(callback, url, ...) abort
 		\ "--header", "Accept: application/json",
 		\ "--silent",
 		\ "--compressed",
-		\ ] + [full_url] + a:000
+	\ ] + [full_url] + a:000
 
 	function! s:esc_cmd_for_print(arg) abort
 		if a:arg =~? '^[a-zA-Z_-]\+$'
@@ -27,14 +24,16 @@ function s:jira_curl(callback, url, ...) abort
 		return "'" . substitute(a:arg, "'", "\\\\'", "g") . "'"
 	endfunction
 
-	" echo join(map(copy(full_cmd), {k,v -> s:esc_cmd_for_print(v)}), " ")
+	call utils#debug(join(map(copy(full_cmd), {k,v -> s:esc_cmd_for_print(v)}), " "))
 	let a:callback.stdout_buffered = 1
 
 	if s:jobid > 0 && jobwait([s:jobid], 0)[0] == -1 " job still running
-		call jobstop(s:jobid)
+		echomsg "Stopping job with id, " . s:jobid
+		"call jobstop(s:jobid)
 	endif
 
 	let s:jobid = jobstart(full_cmd, a:callback)
+	call utils#debug("Started job: " . s:jobid)
 	return s:jobid
 endfunction
 
@@ -61,6 +60,7 @@ function s:write_cache_and_callback(callback, filename, data) abort
 	if empty(a:data)
 		return
 	endif
+	call utils#debug("Writing cache file, " . a:filename)
 	call writefile([json_encode(a:data)], a:filename, "S")
 	call call(a:callback, [a:data])
 endfunction
@@ -69,7 +69,7 @@ function s:curl_cache(callback, url, filename, reload) abort
 	let file_path = utils#cache_file(a:filename)
 	if a:reload
 		\ || ! filereadable(file_path)
-		\ || getftime(file_path) < localtime() - 60 * 60 * 2
+		\ || getftime(file_path) < localtime() - g:jira_cache_timeout
 		\ || getfsize(file_path) < 100
 
 		return s:jira_curl_json(
@@ -113,6 +113,7 @@ function api#get_issue(callback, key, reload) abort
 		\ "created",
 		\ "creator",
 		\ "customfield_10005",
+		\ "customfield_12055",
 		\ "description",
 		\ "fixVersions",
 		\ "issuelinks",
@@ -125,16 +126,56 @@ function api#get_issue(callback, key, reload) abort
 		\ "watches",
 	\ ], ",")
 
-	let url = "/issue/" . a:key . "?fields=" . fields . "&expand=changelog"
-	return s:curl_cache(a:callback, url, a:key . ".json", a:reload)
+	let expand = join(["changelog", "transitions"], ",")
+
+	let url = "/issue/" . a:key . "?fields=" . fields . "&expand=" . expand
+
+	function! s:set_epic_issues(callback, issue, search_results) abort
+		let a:issue.fields.epic_issues = []
+		for issue in a:search_results.issues
+			" Copy specific elements to reduce size of cache object
+			call add(a:issue.fields.epic_issues, {
+				\ "key": issue.key,
+				\ "fields": {
+					\ "summary": issue.fields.summary,
+					\ "status": {"name": issue.fields.status.name},
+				\ },
+			\ })
+		endfor
+		let fname = utils#cache_file(a:issue.key . ".json")
+		call s:write_cache_and_callback(a:callback, fname, a:issue)
+	endfunction
+
+	function! s:process_issue(callback, issue) abort
+		if !utils#issue_is_valid(a:issue)
+			call call(a:callback, [a:issue])
+			return
+		endif
+
+		if a:issue.fields.issuetype.name ==? "epic" && !has_key(a:issue.fields, "epic_issues")
+			call api#search(
+				\ {epic_issues -> s:set_epic_issues(a:callback, a:issue, epic_issues)},
+				\ '"epic link" = ' . a:issue.key,
+			\ )
+		else
+			call call(a:callback, [a:issue])
+		endif
+	endfunction
+
+	return s:curl_cache(
+		\ {issue -> s:process_issue(a:callback, issue)},
+		\ url,
+		\ a:key . ".json",
+		\ a:reload
+	\ )
 endfunction
 
 function api#get_boards(callback) abort
-	return s:curl_cache(a:callback, s:agile_url . "/board", "boards.json", 0)
+	return s:curl_cache(a:callback, utils#get_agile_url() . "/board", "boards.json", 0)
 endfunction
 
 function api#get_sprints(callback, board_id) abort
-	let url = s:agile_url . "/board/" . a:board_id . "/sprint?state=future,active"
+	let url = utils#get_agile_url() . "/board/" . a:board_id . "/sprint?state=future,active"
 	let fname = "sprints-" . a:board_id . ".json"
 	call s:curl_cache(a:callback, url, fname, 0)
 endfunction
@@ -158,7 +199,7 @@ function api#get_issue_edit_metadata(callback, key) abort
 endfunction
 
 function api#get_epics(callback, board_id) abort
-	let url = s:agile_url . "/board/" . a:board_id . "/epic"
+	let url = utils#get_agile_url() . "/board/" . a:board_id . "/epic"
 	let fname = "epics-" . a:board_id . ".json"
 	call s:curl_cache(a:callback, url, fname, 0)
 endfunction
@@ -167,10 +208,28 @@ function api#get_transitions(callback, key) abort
 	call s:jira_curl_json(a:callback, "/issue/" . a:key . "/transitions")
 endfunction
 
+function api#get_users() abort
+	function! s:format_users(users) abort
+		let users_dict = {}
+		for u in a:users
+			if u.accountType == "customer" || u.accountType == "app"
+				continue
+			endif
+			if !u.active
+				let u.displayName = "~" . u.displayName
+			endif
+			let users_dict[u.accountId] = u.displayName
+		endfor
+		let fname = utils#cache_file("users.json")
+		call writefile([json_encode(users_dict)], fname)
+	endfunction
+	call s:jira_curl_json({users -> s:format_users(users)}, "/users/search?maxResults=1000")
+endfunction
+
 " PUT functions
 
 function api#claim_issue(callback, key) abort
-	call s:jira_curl(
+	return s:jira_curl(
 		\ {"on_exit": {j, d, e -> d == 0 && call(a:callback, [])}},
 		\ "/issue/" . a:key . "/assignee",
 		\ "--request", "PUT",
@@ -178,36 +237,31 @@ function api#claim_issue(callback, key) abort
 	\ )
 endfunction
 
-function api#assign_issue_to_sprint(callback, key, sprint_id) abort
+function s:edit_issue(callback, key, data) abort
 	call s:jira_curl(
 		\ {"on_exit": {j, d, e -> d == 0 && call(a:callback, [])}},
 		\ "/issue/" . a:key,
 		\ "--request", "PUT",
-		\ "--data", json_encode({
-			\ "update": {
-				\ "customfield_10005": [
-					\ {
-						\ "set": a:sprint_id
-					\ }
-				\ ]
-			\ }
-		\ }),
+		\ "--data", json_encode(a:data),
 	\ )
 endfunction
 
+function api#assign_issue_to_sprint(callback, key, sprint_id) abort
+	call s:edit_issue(a:callback, a:key, {
+		\ "update": {"customfield_10005": [{"set": a:sprint_id}]}
+	\ })
+endfunction
+
+function api#set_issue_summary(callback, key, new_summary) abort
+	call s:edit_issue(a:callback, a:key, {
+		\ "update": {"summary": [{"set": a:new_summary}]}
+	\ })
+endfunction
+
 function api#set_issue_type(callback, key, new_type) abort
-	call s:jira_curl(
-		\ {"on_exit": {j, d, e -> d == 0 && call(a:callback, [])}},
-		\ "/issue/" . a:key,
-		\ "--request", "PUT",
-		\ "--data", json_encode({
-			\ "fields": {
-				\ "issuetype": {
-					\ "id": a:new_type
-				\ }
-			\ }
-		\ }),
-	\ )
+	call s:edit_issue(a:callback, a:key, {
+		\ "fields": {"issuetype": {"id": a:new_type}}
+	\ })
 endfunction
 
 " POST functions
@@ -259,7 +313,7 @@ endfunction
 function api#assign_issue_to_epic(callback, key, epic_id) abort
 	call s:jira_curl(
 		\ {"on_exit": {j, d, e -> d == 0 && call(a:callback, [])}},
-		\ s:agile_url . "/epic/" . a:epic_id . "/issue",
+		\ utils#get_agile_url() . "/epic/" . a:epic_id . "/issue",
 		\ "--data", json_encode({"issues": [a:key]}),
 	\ )
 endfunction

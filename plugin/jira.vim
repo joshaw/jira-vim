@@ -1,18 +1,22 @@
 " https://developer.atlassian.com/cloud/jira/platform/rest/v2/
 " https://docs.atlassian.com/jira-software/REST/7.3.1/#agile/1.0/
 
-let b:cached_line = -1
-
-let g:jira_list_buffer = -1
-let g:jira_issue_buffer = -1
+let g:jira_cache_timeout = 60 * 60 * 2
 
 augroup Jira
 	autocmd!
 	autocmd BufReadCmd jira://* :call issue_view#read_cmd(expand('<afile>'))
+	autocmd BufWriteCmd jira://* :call issue_view#post_comment(b:jira_issue.key)
 augroup END
 
 "nnoremap <silent> <tab> :wincmd w<CR>
+nnoremap <silent> R :unlet! b:jira_comment_id <bar> call issue_view#reload(utils#get_key())<CR>
+nnoremap <silent> gx :call system(["xdg-open", utils#get_issue_url(utils#get_key())])<CR>
+nnoremap <silent> zv :call issue_view#toggle()<CR>
 nnoremap q :qa!<CR>
+
+command! -nargs=0 JiraToggleIssueView :call issue_view#toggle()
+command! -nargs=* Jira :call Jira(<q-args>)
 
 function Jira(...) abort
 	" List Window
@@ -24,30 +28,37 @@ function Jira(...) abort
 	else
 		call win_gotoid(list_win[0])
 	endif
-	let g:jira_list_win = winnr()
+	let g:jira_list_win = win_getid()
 	call list_view#setup()
 
 	" Issue Window
+	let wininfo = getwininfo()
 	let g:jira_issue_buffer = bufadd("jria-issue-view")
-	let issue_win = win_findbuf(g:jira_issue_buffer)
-	if empty(issue_win)
-		call issue_view#open()
-	else
-		call win_gotoid(issue_win[0])
+	if get(g:, "jira_issue_win_visible", 1)
+		if len(wininfo) < 2
+			call issue_view#open()
+		else
+			for win in wininfo
+				if win.bufnr != g:jira_list_buffer
+					call win_gotoid(win.winid)
+					break
+				endif
+			endfor
+		endif
+		let g:jira_issue_win = win_getid()
+		call issue_view#setup()
 	endif
-	let g:jira_issue_win = winnr()
-	call issue_view#setup()
 
 	" Back to List Window
 	call win_gotoid(list_win[0])
 
 	if empty(a:000) || empty(a:1)
-		let query = utils#get_saved_queries().mysprint
+		let query = utils#get_saved_queries().default
 	elseif has_key(utils#get_saved_queries(), a:1)
 		let query = utils#get_saved_queries()[a:1]
 	elseif a:1 =~# '^\u\+-\d\+$'
 		let query = "key = " . a:1
-		call issue_view#load(a:1, {})
+		call issue_view#load_previous_window(a:1)
 		call list_view#set(query, [])
 		return
 	else
@@ -66,6 +77,7 @@ function Jira(...) abort
 		endif
 
 		call list_view#set(query, fmt_list)
+		call issue_view#set_summary(a:data)
 	endfunction
 
 	call api#search({d -> s:search_callback(d)}, query)

@@ -1,26 +1,10 @@
-let s:username = ""
-let s:password = ""
-
-let s:display_name = ""
-let s:account_id = ""
-
-let s:web_url = ""
-let s:cache_dir = fnamemodify("~/.cache/jira", ":p")
-
-let s:saved_queries = {
-	\ "mysprint": 'project = DN AND sprint IN openSprints() AND status != Done AND assignee IN (currentUser(), empty) ORDER BY assignee, updated',
-	\ "sprint": 'project = DN AND sprint IN (openSprints(), futureSprints()) ORDER BY sprint, status, rank',
-	\ "me": 'assignee = currentUser() AND status != Done',
-	\ "recent": 'project = DN AND updated > -1d ORDER BY updated',
-	\ "backlog": 'project = DN AND status != Done ORDER BY sprint desc, rank',
-\ }
-
 let s:status_abbreviations = {
 	\ "Blocked": "B",
 	\ "Done": "D",
 	\ "In Progress": "P",
 	\ "Open": "O",
 	\ "To Do": "T",
+	\ "New": "T",
 \ }
 
 let s:issue_type_abbreviations = {
@@ -30,53 +14,58 @@ let s:issue_type_abbreviations = {
 	\ "Task": "T",
 \ }
 
-" Data functions (getters) -------------------------
+" Getter functions -------------------------
 
 function utils#get_display_name() abort
-	if empty(s:display_name)
-		call utils#set_myself()
-	endif
-	return s:display_name
+	return utils#get_myself().display_name
 endfunction
 
 function utils#get_issue_url(key) abort
-	return s:web_url . "/browse/" . a:key
+	return g:jira_base_url . "/browse/" . a:key
 endfunction
 
-function utils#get_username()
-	return s:username
+function utils#get_username() abort
+	return g:jira_username
 endfunction
 
-function utils#get_password()
-	return s:password
+function utils#get_password() abort
+	return g:jira_password
 endfunction
 
-function utils#get_account_id()
-	if empty(s:account_id)
-		call utils#set_myself()
-	endif
-	return s:account_id
+function utils#get_agile_url() abort
+	return g:jira_base_url . "/rest/agile/1.0"
 endfunction
 
-function utils#get_saved_queries()
-	return s:saved_queries
+function utils#get_atlassian_url() abort
+	return g:jira_base_url . "/rest/api/2"
 endfunction
 
-function utils#get_status_abbreviations()
+function utils#get_account_id() abort
+	return utils#get_myself().account_id
+endfunction
+
+function utils#get_saved_queries() abort
+	let default_default = "assignee = currentUser() ORDER BY updated"
+	let queries = get(g:, "jira_saved_queries", {})
+	let queries.default = get(queries, "default", default_default)
+	return queries
+endfunction
+
+function utils#get_status_abbreviations() abort
 	return s:status_abbreviations
 endfunction
 
-function utils#get_issue_type_abbreviations()
+function utils#get_issue_type_abbreviations() abort
 	return s:issue_type_abbreviations
 endfunction
 
 " Utility functions ----------------------------
 
-function utils#echo(...) abort
-	echo join(a:000, "\n")
+function utils#echo(msg) abort
+	echo join(a:msg, "\n")
 endfunction
 
-function utils#set_myself() abort
+function utils#get_myself() abort
 	function! s:set_myself(data, fname) abort
 		let s:display_name = a:data.displayName
 		let s:account_id = a:data.accountId
@@ -93,6 +82,7 @@ function utils#set_myself() abort
 		let jobid = api#get_myself({d -> s:set_myself(d, cache_file)})
 		call jobwait([jobid])
 	endif
+	return {"display_name": s:display_name, "account_id": s:account_id}
 endfunction
 
 function utils#get_initials(name) abort
@@ -100,8 +90,17 @@ function utils#get_initials(name) abort
 endfunction
 
 function utils#cache_file(fname) abort
-	call mkdir(s:cache_dir, "p")
-	return s:cache_dir . a:fname
+	let dir = get(environ(), "XDG_CACHE_HOME", fnamemodify("$HOME/.cache/", ":p"))
+	let dir .= "/jira/"
+
+	let cache_dir = get(g:, "jira_cache_dir", dir)
+
+	if cache_dir[-1:] !=# "/"
+		let cache_dir .= "/"
+	endif
+
+	call mkdir(cache_dir, "p")
+	return cache_dir . a:fname
 endfunction
 
 function utils#setup_highlight_groups() abort
@@ -146,8 +145,8 @@ function utils#goto_buffer(buf) abort
 endfunction
 
 function utils#get_key() abort
-	if has_key(b:, "jira_key")
-		return b:jira_key
+	if has_key(b:, "jira_issue")
+		return b:jira_issue.key
 	endif
 
 	if line(".") == 1
@@ -159,6 +158,10 @@ endfunction
 
 function utils#sprint_short_name(name) abort
 	return substitute(a:name, '\(DevOps\|Exonar\) Sprint ', "", "")
+endfunction
+
+function utils#key_is_valid(key) abort
+	return match(a:key, '\u\+-\d\+') >= 0
 endfunction
 
 function utils#issue_is_valid(issue) abort
@@ -177,4 +180,22 @@ function utils#clamp(str, len) abort
 	return strdisplaywidth(a:str) <= a:len
 		\ ? a:str
 		\ : (strcharpart(a:str, 0, a:len - 1) . "…")
+endfunction
+
+function utils#debug(str) abort
+	if get(g:, "jira_debug", 0)
+		"echo a:str
+		call writefile([a:str], "/tmp/tmp-jira", "a")
+	endif
+endfunction
+
+function! utils#human_bytes(bytes)
+	let bytes = a:bytes
+	let sizes = ['B', 'KB', 'MB', 'GB']
+	let i = 0
+	while bytes >= 1024
+		let bytes /= 1024.0
+		let i += 1
+	endwhile
+	return bytes > 0 ? printf('%.1f%s', bytes, sizes[i]) : ''
 endfunction

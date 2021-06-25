@@ -11,22 +11,26 @@ function s:handle_cursor_moved() abort
 		if pos[2] < idx
 			call cursor(1, idx)
 		endif
-		let b:cached_line = 1
-		return
+	else
+		call cursor(pos[1], 1)
 	endif
 
-	call cursor(pos[1], 1)
-	if pos[1] == get(b:, "cached_line", -1)
+	if pos[1] == b:cached_line
 		return
 	endif
 	let b:cached_line = pos[1]
+
+	if pos[1] == 1
+		call issue_view#load_previous_window("summary")
+		return
+	endif
 
 	let key = utils#get_key()
 	if empty(key)
 		return
 	endif
 
-	call issue_view#load(key, {})
+	call issue_view#load_previous_window(key)
 endfunction
 
 function s:handle_insert_enter() abort
@@ -48,21 +52,38 @@ function s:handle_enter() abort
 		return
 	endif
 
-	call issue_view#load(utils#get_key(), {"reload": 1})
+	call issue_view#reload(utils#get_key())
+endfunction
+
+function s:cache_summary() abort
+	let cache_glob = utils#cache_file("*")
+	let totals = {"count": 0, "size": 0, "max": {"size": 0, "fname": ""}}
+	for f in glob(cache_glob, 1, 1)
+		let totals.count += 1
+		let size = getfsize(f)
+		let totals.size += size
+		if size > totals.max.size
+			let totals.max.size = size
+			let totals.max.fname = f
+		endif
+	endfor
+
+	echo printf(join([
+		\ "Cache Summary:",
+		\ "  Count: " . totals.count,
+		\ "  Size: " . utils#human_bytes(totals.size),
+		\ printf("  Largest: %s (%s)",
+			\ fnamemodify(totals.max.fname, ":~"),
+			\ utils#human_bytes(totals.max.size)
+		\ ),
+	\ ], "\n"))
 endfunction
 
 " TODO This is still in progress
 function s:create_issue() abort
-	function! s:format_create_meta(data, project_key) abort
-		let issue_types = a:data.projects[0].issuetypes
-		let issue_type_choice = inputlist(
-			\ ["Choose issue type:"] +
-			\ map(copy(issue_types), {k,v -> (k + 1) . ". " . v.name}),
-		\ )
-
-		let issue_type = issue_types[issue_type_choice - 1]
+	function! s:format_create_meta(issue_type, project_key) abort
 		let buf_contents = ["# Create issue for " . a:project_key]
-		for [name, field] in items(issue_type.fields)
+		for [name, field] in items(a:issue_type.fields)
 			let required = field.required ? "*" : ""
 			call add(buf_contents, printf("-> %s%s [%s]:",
 				\ field.name,
@@ -71,14 +92,14 @@ function s:create_issue() abort
 			\ ))
 
 			if field.hasDefaultValue && has_key(field, "defaultValue")
+				let default_value = field.defaultValue
 				if field.name == "Priority"
-					call add(buf_contents, json_encode({
+					let default_value = {
 						\ "id": field.defaultValue.id,
 						\ "name": field.defaultValue.name
-					\ }))
-				else
-					call add(buf_contents, json_encode(field.defaultValue))
+					\ }
 				endif
+				call add(buf_contents, "Default: " . json_encode(default_value))
 			endif
 
 			if field.name == "Reporter"
@@ -92,49 +113,24 @@ function s:create_issue() abort
 
 			elseif field.name == "Issue Type"
 				call add(buf_contents, json_encode({
-					\ "id": issue_type.id,
-					\ "name": issue_type.name
+					\ "id": a:issue_type.id,
+					\ "name": a:issue_type.name
 				\ }))
 			endif
-			
+
 			call add(buf_contents, "")
 		endfor
 		redraw
 		echo join(buf_contents, "\n")
 	endfunction
 
-	function! s:choose_board(data) abort closure
-		let orig_data = a:data
-		call sort(orig_data.values, {i1, i2 -> i1.name - i2.name})
-
-		let counter = 1
-		let board_choices = ["Choose board:"]
-		for board in orig_data.values
-			if ! has_key(board.location, "projectName")
-				continue
-			endif
-			call add(board_choices, printf("%2i. %s - %s",
-				\ counter,
-				\ board.name,
-				\ board.location.name,
-			\ ))
-			let counter += 1
-		endfor
-
-		let choice = inputlist(board_choices) - 1
-		if choice < 0 || choice > len(orig_data.values)
-			return
-		endif
-
-		let project_key = orig_data.values[choice].location.projectKey
-
-		call api#get_create_metadata(
-			\ {d -> s:format_create_meta(d, project_key)},
-			\ project_key,
-		\ )
-	endfunction
-
-	call api#get_boards({d -> s:choose_board(d)})
+	call choose#board({board -> api#get_create_metadata(
+		\ {create_meta -> choose#issue_type(
+			\ {create_meta_type -> s:format_create_meta(create_meta_type, board.location.projectKey)},
+			\ create_meta.projects[0].issuetypes
+		\ )},
+		\ board.location.projectKey,
+	\ )})
 endfunction
 
 function s:sort_sprint_list(sprints) abort
@@ -155,17 +151,14 @@ function list_view#format(list) abort
 		let issue_type = issue.fields.issuetype.name
 		let issue_type = get(utils#get_issue_type_abbreviations(), issue_type, issue_type)
 
-		let most_recent_sprint = ""
 		let sprints = issue.fields.customfield_10005
-		if type(sprints) == v:t_list && len(sprints) > 0
-			let sorted_sprints = s:sort_sprint_list(sprints)
-			let most_recent_sprint = sorted_sprints[0].shortname
-		endif
+		let most_recent_sprint = type(sprints) == v:t_list && len(sprints) > 0
+			\ ? s:sort_sprint_list(sprints)[0].shortname
+			\ : ""
 
-		let assignee = ""
-		if type(issue.fields.assignee) == v:t_dict
-			let assignee = utils#get_initials(issue.fields.assignee.displayName)
-		endif
+		let assignee = type(issue.fields.assignee) == v:t_dict
+			\ ? utils#get_initials(issue.fields.assignee.displayName)
+			\ : ""
 
 		let fmt_issue = [
 			\ " " . issue.key,
@@ -221,11 +214,8 @@ function list_view#setup() abort
 
 	syntax cluster JiraQueryElements contains=JQLKeywords,JQLFunctions,JQLOperators,JQLString,JQLFields
 
-	nnoremap <buffer> <CR> :call <SID>handle_enter()<CR>
-	inoremap <buffer> <CR> <Esc>:call <SID>handle_enter()<CR>
-	nnoremap <buffer> R :call issue_view#load(utils#get_key(), {"reload": 1})<CR>
-	nnoremap <buffer> zv :call issue_view#toggle()<CR>
-	nnoremap <buffer> gx :call system(["xdg-open", utils#get_issue_url(utils#get_key())])<CR>
+	nnoremap <buffer> <silent> <CR> :call <SID>handle_enter()<CR>
+	inoremap <buffer> <silent> <CR> <Esc>:call <SID>handle_enter()<CR>
 
 	function! s:complete_queries(A, L, P) abort
 		return join(keys(utils#get_saved_queries()), "\n")
@@ -235,13 +225,15 @@ function list_view#setup() abort
 		\ JiraQuery :call Jira(get(utils#get_saved_queries(), <q-args>, "mysprint"))
 
 	command! -buffer -nargs=0 JiraCreateIssue :call s:create_issue()
-	command! -buffer -nargs=0 JiraToggleIssueView :call issue_view#toggle()
+	command! -buffer -nargs=0 JiraCacheSummary :call s:cache_summary()
 
 	augroup jira
 		autocmd!
 		autocmd CursorMoved <buffer> ++nested call <SID>handle_cursor_moved()
 		autocmd InsertEnter <buffer> call <SID>handle_insert_enter()
 	augroup END
+
+	let b:cached_line = 1
 endfunction
 
 function list_view#setup_highlighting(markers) abort
