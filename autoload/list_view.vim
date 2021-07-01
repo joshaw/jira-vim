@@ -203,8 +203,8 @@ function list_view#setup() abort
 	syntax keyword JQLKeywords AND IN OR NOT EMPTY ORDER BY WAS CHANGED contained
 	syntax keyword JQLFields contained
 		\ assignee comment created creator description id issueKey key priority
-		\ project rank reporter sprint status summary text type updated watcher
-		\ watchers
+		\ project rank reporter sprint status statusCategory summary text type
+		\ updated watcher watchers
 	syntax case match
 
 	syntax keyword JQLFunctions openSprints futureSprints currentUser contained
