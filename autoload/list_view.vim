@@ -184,6 +184,22 @@ function list_view#format(list) abort
 	\ ], issues)
 endfunction
 
+function s:format_boards(boards) abort
+	let headers = ["KEY\tNAME\tDISPLAY NAME\tTYPE"]
+	let fmt_boards = []
+	for board in a:boards.values
+		let is_project = has_key(board.location, "projectId")
+		call add(fmt_boards, join([
+			\ is_project ? board.location.projectKey : "-",
+			\ board.name,
+			\ board.location.displayName,
+			\ board.type,
+		\ ], "\t"))
+	endfor
+
+	echo system(["column", "--table", "--separator=\t", "--output-separator= "], headers + sort(fmt_boards))
+endfunction
+
 function list_view#setup() abort
 
 	setlocal buftype=nofile
@@ -231,6 +247,7 @@ function list_view#setup() abort
 
 	command! -buffer -nargs=0 JiraCreateIssue :call s:create_issue()
 	command! -buffer -nargs=0 JiraCacheSummary :call s:cache_summary()
+	command! -buffer -nargs=0 JiraListBoards :call api#get_boards({boards -> s:format_boards(boards)})
 
 	augroup jira
 		autocmd!
