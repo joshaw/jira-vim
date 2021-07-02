@@ -143,7 +143,7 @@ function s:sort_sprint_list(sprints) abort
 endfunction
 
 function list_view#format(list) abort
-	let issues = ["1\t2\t3\t4\t5\t6"]
+	let issues = []
 	for issue in a:list
 		let status = issue.fields.status.name
 		let status = utils#clamp(get(utils#get_status_abbreviations(), status, status), 17)
@@ -164,12 +164,17 @@ function list_view#format(list) abort
 			\ " " . issue.key,
 			\ status,
 			\ issue_type,
-			\ most_recent_sprint,
 			\ assignee,
 			\ issue.fields.summary
 		\ ]
+
+		" Remove tab characters that mess with formatting
+		call map(fmt_issue, {k,v -> substitute(v, "\t", " ", "g")})
 		call add(issues, join(fmt_issue, "\t"))
 	endfor
+
+	let col_markers = join(range(count(issues[0], "\t") + 1), "\t")
+	call insert(issues, col_markers)
 
 	return systemlist([
 		\ "column",
@@ -237,25 +242,25 @@ function list_view#setup() abort
 endfunction
 
 function list_view#setup_highlighting(markers) abort
-	let c1 = matchend(a:markers, '1\s\+')
+	let c0 = matchend(a:markers, '0\s\+')
+	let c1 = matchend(a:markers, '1\s\+', c0)
 	let c2 = matchend(a:markers, '2\s\+', c1)
 	let c3 = matchend(a:markers, '3\s\+', c2)
 	let c4 = matchend(a:markers, '4\s\+', c3)
-	let c5 = matchend(a:markers, '5\s\+', c4)
 
-	exe 'syntax match JiraKey "\%<'.c1.'c\<\u\+-\d\+\>"'
+	exe 'syntax match JiraKey "\%<'.c0.'c\<\u\+-\d\+\>"'
 
-	exe 'syntax match JiraStatusBlocked "\%>'.c1.'c\<B\>\%<'.(c2+1).'c"'
-	exe 'syntax match JiraStatusDone "\%>'.c1.'c\<D\>\%<'.(c2+1).'c"'
-	exe 'syntax match JiraStatusInProgress "\%>'.c1.'c\<P\>\%<'.(c2+1).'c"'
-	exe 'syntax match JiraStatusToDo "\%>'.c1.'c\<T\>\%<'.(c2+1).'c"'
+	exe 'syntax match JiraStatusBlocked "\%>'.c0.'c\<B\>\%<'.(c1+1).'c"'
+	exe 'syntax match JiraStatusDone "\%>'.c0.'c\<D\>\%<'.(c1+1).'c"'
+	exe 'syntax match JiraStatusInProgress "\%>'.c0.'c\<P\>\%<'.(c1+1).'c"'
+	exe 'syntax match JiraStatusToDo "\%>'.c0.'c\<T\>\%<'.(c1+1).'c"'
 
-	exe 'syntax match JiraTypeBug "\%>'.c2.'c\<B\>\%<'.(c3+1).'c"'
-	exe 'syntax match JiraTypeEpic "\%>'.c2.'c\<E\>\%<'.(c3+1).'c"'
-	exe 'syntax match JiraTypeStory "\%>'.c2.'c\<S\>\%<'.(c3+1).'c"'
-	exe 'syntax match JiraTypeTask "\%>'.c2.'c\<T\>\%<'.(c3+1).'c"'
+	exe 'syntax match JiraTypeBug "\%>'.c1.'c\<B\>\%<'.(c2+1).'c"'
+	exe 'syntax match JiraTypeEpic "\%>'.c1.'c\<E\>\%<'.(c2+1).'c"'
+	exe 'syntax match JiraTypeStory "\%>'.c1.'c\<S\>\%<'.(c2+1).'c"'
+	exe 'syntax match JiraTypeTask "\%>'.c1.'c\<T\>\%<'.(c2+1).'c"'
 
 	let inits = utils#get_initials(utils#get_display_name())
-	exe 'syntax match JiraAssigneeMe "\%>'.c4.'c\<'.inits.'\>\%<'.(c5+1).'c"'
-	exe 'syntax match JiraAssigneeNone "\%>'.c4.'c\('.inits.'\)\@!\<\u\u\>\%<'.(c5+1).'c"'
+	exe 'syntax match JiraAssigneeMe "\%>'.c3.'c\<'.inits.'\>\%<'.(c4+1).'c"'
+	exe 'syntax match JiraAssigneeNone "\%>'.c3.'c\('.inits.'\)\@!\<\u\u\>\%<'.(c4+1).'c"'
 endfunction
