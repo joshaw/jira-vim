@@ -3,6 +3,10 @@ function s:wrap(str) abort
 	return systemlist(["fmt", "-s"], a:str)
 endfunction
 
+function s:plural(num) abort
+	return floor(a:num) > 1 ? "s" : ""
+endfunction
+
 let s:date_cache = {}
 function s:date(str) abort
 	let date_ts = has_key(s:date_cache, a:str)
@@ -12,16 +16,16 @@ function s:date(str) abort
 	let s:date_cache[a:str] = date_ts
 
 	let secs = localtime() - date_ts
-	if secs < 60 | return printf("%.0f seconds ago", secs) | endif
+	if secs < 60 | return printf("%.0f second%s ago", secs, s:plural(secs)) | endif
 
 	let mins = secs / 60
-	if mins < 91 | return printf("%.0f minutes ago", mins) | endif
+	if mins < 91 | return printf("%.0f minute%s ago", mins, s:plural(mins)) | endif
 
 	let hours = mins / 60
-	if hours < 35 | return printf("%.0f hours ago", hours) | endif
+	if hours < 35 | return printf("%.0f hour%s ago", hours, s:plural(hours)) | endif
 
 	let days = hours / 24
-	if days < 21 | return printf("%.0f days ago", days) | endif
+	if days < 21 | return printf("%.0f day%s ago", days, s:plural(days)) | endif
 
 	return strftime("%Y-%m-%d %H:%M", date_ts)
 endfunction
