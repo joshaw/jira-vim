@@ -113,6 +113,9 @@ MAPS
 
 CONFIGURATION
 
+                                                *g:jira_username*
+                                                *g:jira_password*
+                                                *g:jira_base_url*
 The only neccessary configuration is to configure the API URL for the instance
 of Jira to connect to and to authenticate with that Jira instance. This
 requires a username and API key. Put these in your vimrc or some other file
@@ -123,7 +126,7 @@ that is sourced.
     let g:jira_base_url = "<base_url>" " eg https://example.atlassian.net
 <
 Other optional configuration:
-
+                                                *g:jira_cache_dir*
 Manually override the directory for caching data (will be created if it
 doesn't already exist):
 >
