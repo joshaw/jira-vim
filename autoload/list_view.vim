@@ -1,7 +1,12 @@
+function list_view#the() abort
+	return bufadd("jira-list-buffer")
+endfunction
+
 function list_view#set(query, list) abort
 	let buf_contents = ["> [" . len(a:list) . "] " . a:query] + a:list
-	silent call deletebufline(g:jira_list_buffer, 1, "$")
-	call setbufline(g:jira_list_buffer, 1, buf_contents)
+	let list_buf = list_view#the()
+	silent call deletebufline(list_buf, 1, "$")
+	call setbufline(list_buf, 1, buf_contents)
 endfunction
 
 function s:handle_cursor_moved() abort
@@ -53,7 +58,7 @@ function s:handle_enter() abort
 	endif
 
 	if len(getwininfo()) < 2
-		call issue_view#toggle()
+		call issue_view#open(utils#get_key())
 	else
 		call issue_view#reload(utils#get_key())
 	endif
@@ -236,6 +241,7 @@ function list_view#setup() abort
 
 	nnoremap <buffer> <silent> <CR> :call <SID>handle_enter()<CR>
 	inoremap <buffer> <silent> <CR> <Esc>:call <SID>handle_enter()<CR>
+	nnoremap <buffer> <silent> q :qa!<CR>
 
 	function! s:complete_queries(A, L, P) abort
 		return join(keys(utils#get_saved_queries()), "\n")

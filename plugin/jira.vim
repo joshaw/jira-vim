@@ -12,46 +12,25 @@ augroup END
 "nnoremap <silent> <tab> :wincmd w<CR>
 nnoremap <silent> R :unlet! b:jira_comment_id <bar> call issue_view#reload(utils#get_key())<CR>
 nnoremap <silent> gx :call system(["xdg-open", utils#get_issue_url(utils#get_key())])<CR>
-nnoremap <silent> zv :call issue_view#toggle()<CR>
-nnoremap q :qa!<CR>
+nnoremap <silent> zv :call issue_view#toggle(utils#get_key())<CR>
 
-command! -nargs=0 JiraToggleIssueView :call issue_view#toggle()
+command! -nargs=0 JiraToggleIssueView :call issue_view#toggle(utils#get_key())
 command! -nargs=* Jira :call Jira(<q-args>)
 
 function Jira(...) abort
 	" List Window
-	let g:jira_list_buffer = bufadd("jira-list-view")
-	let list_win = win_findbuf(g:jira_list_buffer)
+	let list_buf = list_view#the()
+	let list_win = win_findbuf(list_buf)
 	if empty(list_win)
 		let list_win = [win_getid()]
-		execute "buffer " . g:jira_list_buffer
+		execute "buffer " . list_buf
 	else
 		call win_gotoid(list_win[0])
 	endif
 	let g:jira_list_win = win_getid()
 	call list_view#setup()
 
-	" Issue Window
-	let wininfo = getwininfo()
-	let g:jira_issue_buffer = bufadd("jria-issue-view")
-	if get(g:, "jira_issue_win_visible", 1)
-		if len(wininfo) < 2
-			call issue_view#open()
-		else
-			for win in wininfo
-				if win.bufnr != g:jira_list_buffer
-					call win_gotoid(win.winid)
-					break
-				endif
-			endfor
-		endif
-		let g:jira_issue_win = win_getid()
-		call issue_view#setup()
-	endif
-
-	" Back to List Window
-	call win_gotoid(list_win[0])
-
+	" Determine query to use
 	if empty(a:000) || empty(a:1)
 		let query = utils#get_saved_queries().default
 	elseif has_key(utils#get_saved_queries(), a:1)

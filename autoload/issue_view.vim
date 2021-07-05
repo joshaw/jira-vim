@@ -296,15 +296,21 @@ function s:format_issue(issue, opts) abort
 	\ + comments
 endfunction
 
+function issue_view#the() abort
+	let buf = bufadd("jira-issue-view")
+	call bufload(buf)
+	return buf
+endfunction
+
 function issue_view#load(key) abort
-	if ! a:key ==# "summary" && ! utils#key_is_valid(a:key)
+	if a:key ==# "summary"
+		exe "buffer " . issue_view#the()
 		return
 	endif
 
-	if a:key ==# "summary"
-		exe "buffer " . g:jira_issue_buffer
-	else
+	if utils#key_is_valid(a:key)
 		silent exe "edit jira://" . a:key
+		return
 	endif
 endfunction
 
@@ -402,9 +408,10 @@ function issue_view#set_summary(data) abort
 	"call add(text, "")
 	"call extend(text, systemlist(["jq", "-S", "."], json_encode(a:data)))
 
-	silent call deletebufline(g:jira_issue_buffer, 1, "$")
-	call setbufline(g:jira_issue_buffer, 1, text)
-	call setbufvar(g:jira_issue_buffer, "&modified", 0)
+	let issue_buf = issue_view#the()
+	silent call deletebufline(issue_buf, 1, "$")
+	call setbufline(issue_buf, 1, text)
+	call setbufvar(issue_buf, "&modified", 0)
 endfunction
 
 function issue_view#post_comment(key) abort
@@ -692,6 +699,7 @@ function issue_view#setup() abort
 
 	nnoremap <buffer> <silent> <CR> :call <SID>preview_issue_under_cursor()<CR>
 	nnoremap <buffer> <silent> <C-]> :call issue_view#load(<SID>key_under_cursor())<CR>
+	nnoremap <buffer> <silent> q :q!<CR>
 
 	function! s:complete_transition(A, L, P) abort
 		return join(map(copy(b:jira_issue.transitions), {k,v -> v.name}), "\n")
@@ -714,28 +722,27 @@ function issue_view#setup() abort
 	command! -buffer -bar -nargs=0 JiraViewRaw :exe "edit " . utils#cache_file(b:jira_issue.key . ".json")
 endfunction
 
-function issue_view#open() abort
+function issue_view#open(key) abort
 	execute printf("%.0fsplit", winheight(0) * 0.7)
-	execute "buffer " . g:jira_issue_buffer
-	let g:jira_issue_win = win_getid()
+	if a:key ==# "" || a:key ==# "summary"
+		execute "buffer " . issue_view#the()
+	else
+		call issue_view#load(a:key)
+	endif
 endfunction
 
-function issue_view#toggle() abort
+function issue_view#toggle(key) abort
 	let cur_win_id = win_getid()
 	let wininfo = getwininfo()
 	if len(wininfo) < 2
 		" enable issue view
-		let issue_to_load = utils#get_key()
-		call issue_view#open()
-		call issue_view#load(issue_to_load)
+		call issue_view#open(a:key)
 		call win_gotoid(cur_win_id)
-		let g:jira_issue_win_visible = 1
 		return
 	endif
 
 	" disable issue view
 	call win_gotoid(g:jira_list_win)
-	let g:jira_issue_win_visible = 0
 	only
 endfunction
 
