@@ -296,22 +296,8 @@ function s:format_issue(issue, opts) abort
 	\ + comments
 endfunction
 
-function issue_view#the() abort
-	let buf = bufadd("jira-issue-view")
-	call bufload(buf)
-	return buf
-endfunction
-
 function issue_view#load(key) abort
-	if a:key ==# "summary"
-		exe "buffer " . issue_view#the()
-		return
-	endif
-
-	if utils#key_is_valid(a:key)
-		silent exe "edit jira://" . a:key
-		return
-	endif
+	silent exe "edit jira://" . a:key
 endfunction
 
 function issue_view#load_previous_window(key) abort
@@ -346,21 +332,26 @@ function issue_view#reload(key) abort
 endfunction
 
 function issue_view#read_cmd(file) abort
-	let key = matchstr(a:file, 'jira://\zs\u\+-\d\+')
 	call issue_view#setup()
 
 	let buf_nr = bufnr()
 
 	silent call deletebufline(buf_nr, 1, "$")
-	call setbufline(buf_nr, 1, ["", "Loading..."])
-	call api#get_issue(
-		\ {data -> s:view_issue_callback(data, buf_nr)},
-		\ key,
-		\ v:cmdbang,
-	\ )
+
+	if a:file ==# "jira://summary"
+		call issue_view#set_summary(g:jira_query_data, buf_nr)
+	else
+		let key = matchstr(a:file, 'jira://\zs\u\+-\d\+')
+		call setbufline(buf_nr, 1, ["", "Loading..."])
+		call api#get_issue(
+			\ {data -> s:view_issue_callback(data, buf_nr)},
+			\ key,
+			\ v:cmdbang,
+		\ )
+	endif
 endfunction
 
-function issue_view#set_summary(data) abort
+function issue_view#set_summary(data, buf_nr) abort
 	if has_key(a:data, "errorMessages")
 		return
 	endif
@@ -408,10 +399,9 @@ function issue_view#set_summary(data) abort
 	"call add(text, "")
 	"call extend(text, systemlist(["jq", "-S", "."], json_encode(a:data)))
 
-	let issue_buf = issue_view#the()
-	silent call deletebufline(issue_buf, 1, "$")
-	call setbufline(issue_buf, 1, text)
-	call setbufvar(issue_buf, "&modified", 0)
+	silent call deletebufline(a:buf_nr, 1, "$")
+	call setbufline(a:buf_nr, 1, text)
+	call setbufvar(a:buf_nr, "&modified", 0)
 endfunction
 
 function issue_view#post_comment(key) abort
@@ -724,11 +714,7 @@ endfunction
 
 function issue_view#open(key) abort
 	execute printf("%.0fsplit", winheight(0) * 0.7)
-	if a:key ==# "" || a:key ==# "summary"
-		execute "buffer " . issue_view#the()
-	else
-		call issue_view#load(a:key)
-	endif
+	call issue_view#load(a:key)
 endfunction
 
 function issue_view#toggle(key) abort

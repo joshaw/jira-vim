@@ -150,7 +150,7 @@ function utils#get_key() abort
 	endif
 
 	if line(".") == 1
-		return
+		return "summary"
 	endif
 
 	return matchstr(getline("."), '^ \?\zs\u\+-\d\+')

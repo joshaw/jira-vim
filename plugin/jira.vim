@@ -60,7 +60,7 @@ function Jira(...) abort
 		endif
 
 		call list_view#set(query, fmt_list)
-		call issue_view#set_summary(a:data)
+		let g:jira_query_data = a:data
 	endfunction
 
 	call api#search({d -> s:search_callback(d)}, query)
