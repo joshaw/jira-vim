@@ -28,7 +28,7 @@ function s:jira_curl(callback, url, ...) abort
 	let a:callback.stdout_buffered = 1
 
 	if s:jobid > 0 && jobwait([s:jobid], 0)[0] == -1 " job still running
-		echomsg "Stopping job with id, " . s:jobid
+		"echomsg "Stopping job with id, " . s:jobid
 		"call jobstop(s:jobid)
 	endif
 

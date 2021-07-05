@@ -310,7 +310,6 @@ endfunction
 
 function issue_view#load_previous_window(key) abort
 	if len(getwininfo()) < 2
-		echo "No issue window"
 		return
 	endif
 
