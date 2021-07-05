@@ -31,7 +31,7 @@ list of issues and is used to navigate between issues.
 :JiraCacheSummary       Show a summary of the cache directory (by default set
                         to `$XDG_CACHE_HOME/jira`), size, number of files.
 
-:JiraCreateIssue        Non-funcional!
+:JiraCreateIssue        Non-functional!
 
                                                 *jira_issue-list_maps*
 MAPS
@@ -99,16 +99,19 @@ the currently viewed issue or modify that issue in some way.
                                                 *jira_issue-view_maps*
 MAPS
 
-                                                *:jira_<CR>*
+                                                *jira_<CR>*
 <CR>                    When the cursor is over a valid Jira issue key, show a
                         summary of that issue.
 
-                                                *:jira_<C-O>*
-<C-O>                   When the cursor is over a valid Jira issue key, load
+                                                *jira_<C-]>*
+<C-]>                   When the cursor is over a valid Jira issue key, load
                         that issue in the issue view.
 
-                                                *:jira_<C-R>*
+                                                *jira_<C-R>*
 <C-R>                   Reload the current issue.
+
+                                                *jira_zv*
+zv                      Toggle the issue view window.
 
 
 CONFIGURATION
@@ -116,7 +119,7 @@ CONFIGURATION
                                                 *g:jira_username*
                                                 *g:jira_password*
                                                 *g:jira_base_url*
-The only neccessary configuration is to configure the API URL for the instance
+The only necessary configuration is to configure the API URL for the instance
 of Jira to connect to and to authenticate with that Jira instance. This
 requires a username and API key. Put these in your vimrc or some other file
 that is sourced.
@@ -153,3 +156,13 @@ other is given. Eg:
         "recent": "project = BLA AND updated > -1d ORDER BY updated",
     }
 <
+                                                *jira_commenting*
+COMMENTING
+
+When the issue view is open with an issue displayed, it is possible to compose
+and submit comments on that issue. To do so, open the folded "Add comment:"
+text, displayed beneath the issue summary, and compose the body of the comment
+using Atlassian's markup language. When ready to submit the comment, save the
+buffer, the comment text with be posted and the issue reloaded.
+
+The same mechanism is used for modifying comments, see |:JiraEditComment|.
