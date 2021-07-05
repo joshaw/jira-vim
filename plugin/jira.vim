@@ -44,6 +44,10 @@ function Jira(...) abort
 		let query = a:1
 	endif
 
+	if get(g:, "jira_open_issue_view_by_default", 0)
+		call issue_view#toggle("summary")
+	endif
+
 	function! s:search_callback(data) abort closure
 		if has_key(a:data, "errorMessages")
 			let fmt_list = a:data.errorMessages

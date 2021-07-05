@@ -129,6 +129,11 @@ doesn't already exist):
 >
     let g:jira_cache_dir = "/path/to/dir"
 <
+                                                *g:jira_open_issue_view_by_default*
+Set the issue-view to open by default on startup:
+>
+    let g:jira_open_issue_view_by_default = 1
+<
                                                 *jira_saved_queries*
 SAVED QUERIES
 
