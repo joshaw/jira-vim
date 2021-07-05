@@ -52,7 +52,11 @@ function s:handle_enter() abort
 		return
 	endif
 
-	call issue_view#reload(utils#get_key())
+	if len(getwininfo()) < 2
+		call issue_view#toggle()
+	else
+		call issue_view#reload(utils#get_key())
+	endif
 endfunction
 
 function s:cache_summary() abort
