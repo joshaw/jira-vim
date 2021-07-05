@@ -176,12 +176,7 @@ function list_view#format(list) abort
 	let col_markers = join(range(count(issues[0], "\t") + 1), "\t")
 	call insert(issues, col_markers)
 
-	return systemlist([
-		\ "column",
-		\ "--table",
-		\ "--separator=\t",
-		\ "--output-separator= "
-	\ ], issues)
+	return utils#tab_align(issues)
 endfunction
 
 function s:format_boards(boards) abort
@@ -197,7 +192,7 @@ function s:format_boards(boards) abort
 		\ ], "\t"))
 	endfor
 
-	echo system(["column", "--table", "--separator=\t", "--output-separator= "], headers + sort(fmt_boards))
+	echo join(utils#tab_align(headers + sort(fmt_boards)), "\n")
 endfunction
 
 function list_view#setup() abort

@@ -199,3 +199,10 @@ function! utils#human_bytes(bytes)
 	endwhile
 	return bytes > 0 ? printf('%.1f%s', bytes, sizes[i]) : ''
 endfunction
+
+function utils#tab_align(list) abort
+	return systemlist(
+		\ ["column", "--table", "--separator=\t", "--output-separator= "],
+		\ a:list
+	\ )
+endfunction
