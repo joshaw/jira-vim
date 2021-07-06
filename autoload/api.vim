@@ -69,7 +69,7 @@ function s:curl_cache(callback, url, filename, reload) abort
 	let file_path = utils#cache_file(a:filename)
 	if a:reload
 		\ || ! filereadable(file_path)
-		\ || getftime(file_path) < localtime() - g:jira_cache_timeout
+		\ || getftime(file_path) < localtime() - get(g:, "jira_cache_timeout", 60*60*2)
 		\ || getfsize(file_path) < 100
 
 		return s:jira_curl_json(

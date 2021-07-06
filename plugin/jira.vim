@@ -1,8 +1,6 @@
 " https://developer.atlassian.com/cloud/jira/platform/rest/v2/
 " https://docs.atlassian.com/jira-software/REST/7.3.1/#agile/1.0/
 
-let g:jira_cache_timeout = 60 * 60 * 2
-
 augroup Jira
 	autocmd!
 	autocmd BufReadCmd jira://* :call issue_view#read_cmd(expand('<afile>'))
