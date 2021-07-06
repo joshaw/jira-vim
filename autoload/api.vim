@@ -18,13 +18,11 @@ function s:jira_curl(callback, url, ...) abort
 	\ ] + [full_url] + a:000
 
 	function! s:esc_cmd_for_print(arg) abort
-		if a:arg =~? '^[a-zA-Z_-]\+$'
-			return a:arg
-		endif
-		return "'" . substitute(a:arg, "'", "\\\\'", "g") . "'"
+		return a:arg =~# '^[a-zA-Z_-]\+$'
+			\ ? a:arg
+			\ : "'" . substitute(a:arg, "'", "\\\\'", "g") . "'"
 	endfunction
 
-	call utils#debug(join(map(copy(full_cmd), {k,v -> s:esc_cmd_for_print(v)}), " "))
 	let a:callback.stdout_buffered = 1
 
 	if s:jobid > 0 && jobwait([s:jobid], 0)[0] == -1 " job still running
@@ -33,6 +31,10 @@ function s:jira_curl(callback, url, ...) abort
 	endif
 
 	let s:jobid = jobstart(full_cmd, a:callback)
+	if s:jobid < 0
+		let full_cmd_str = join(map(copy(full_cmd), {k,v -> s:esc_cmd_for_print(v)}), " ")
+		echoerr "Command failed: " . full_cmd_str
+	endif
 	call utils#debug("Started job: " . s:jobid)
 	return s:jobid
 endfunction
