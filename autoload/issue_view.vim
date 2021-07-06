@@ -416,7 +416,7 @@ function issue_view#set_summary(data, buf_nr) abort
 		let i = 0
 		for [item, count] in sort(items(a:list), {a,b -> b[1] - a[1]})
 			let title = i == 0 ? a:title : ""
-			call add(text, printf("%8s %2i %s", title, count, item))
+			call add(text, printf("%8s %3i %s", title, count, item))
 			let i += 1
 		endfor
 	endfunction

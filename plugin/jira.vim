@@ -57,6 +57,10 @@ function Jira(...) abort
 
 		call list_view#set(query, fmt_list)
 		let g:jira_query_data = a:data
+		let summary_buf = bufnr("jira://summary")
+		if summary_buf > 0 && ! empty(win_findbuf(summary_buf))
+			call issue_view#set_summary(a:data, summary_buf)
+		endif
 	endfunction
 
 	call api#search({d -> s:search_callback(d)}, query)
