@@ -187,7 +187,7 @@ function list_view#format(list) abort
 		let status = utils#clamp(get(utils#get_status_abbreviations(), status, status), 17)
 
 		let issue_type = issue.fields.issuetype.name
-		let issue_type = get(utils#get_issue_type_abbreviations(), issue_type, issue_type)
+		let issue_type = utils#clamp(get(utils#get_issue_type_abbreviations(), issue_type, issue_type), 10)
 
 		let sprints = issue.fields.customfield_10005
 		let most_recent_sprint = type(sprints) == v:t_list && len(sprints) > 0
