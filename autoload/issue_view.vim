@@ -672,7 +672,7 @@ function issue_view#setup() abort
 	syntax clear
 	syntax sync fromstart
 
-	"setlocal bufhidden=delete
+	setlocal bufhidden=unload
 	setlocal buftype=acwrite
 	setlocal colorcolumn=0
 	setlocal conceallevel=3
