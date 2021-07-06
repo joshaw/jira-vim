@@ -88,11 +88,11 @@ function api#get_myself(callback) abort
 	return s:jira_curl_json(a:callback, "/myself")
 endfunction
 
-function api#search(callback, query) abort
+function api#search(callback, query, options) abort
 	let full_query = json_encode({
 		\ "jql": a:query,
 		\ "maxResults": get(g:, "jira_search_max_results", 100),
-		\ "startAt": 0,
+		\ "startAt": get(a:options, "start_at", 0),
 		\ "fields": [
 			\ "assignee",
 			\ "customfield_10005",
@@ -160,6 +160,7 @@ function api#get_issue(callback, key, reload) abort
 			call api#search(
 				\ {epic_issues -> s:set_epic_issues(a:callback, a:issue, epic_issues)},
 				\ '"epic link" = ' . a:issue.key,
+				\ {},
 			\ )
 		else
 			call call(a:callback, [a:issue])

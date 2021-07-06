@@ -2,8 +2,30 @@ function list_view#the() abort
 	return bufadd("jira-list-buffer")
 endfunction
 
-function list_view#set(query, list) abort
-	let buf_contents = ["> [" . len(a:list) . "] " . a:query] + a:list
+function list_view#set(query, data) abort
+	if has_key(a:data, "errorMessages")
+		let fmt_list = a:data.errorMessages
+	    let len = 0
+	elseif has_key(a:data, "issues")
+		let len = a:data.total
+		let fmt_list = list_view#format(a:data.issues)
+		call list_view#setup_highlighting(fmt_list[0])
+		let fmt_list = fmt_list[1:]
+	else
+		echoerr "Could not understand response"
+	endif
+
+	if a:data.total > a:data.startAt + a:data.maxResults
+		let next_page = printf(
+			\ "> Next page (currently displaying %i to %i of %i)",
+			\ a:data.startAt + 1,
+			\ a:data.startAt + a:data.maxResults,
+			\ a:data.total
+		\ )
+		call add(fmt_list, next_page)
+	endif
+
+	let buf_contents = ["> [" . len . "] " . a:query] + fmt_list
 	let list_buf = list_view#the()
 	silent call deletebufline(list_buf, 1, "$")
 	call setbufline(list_buf, 1, buf_contents)
@@ -54,6 +76,13 @@ function s:handle_enter() abort
 	if line(".") == 1
 		let query = substitute(line, '^> \[\d\+\] ', "", "")
 		call Jira(query)
+		return
+	endif
+
+	if getline(".") =~# "^> Next page"
+		let query = substitute(getline(1), '^> \[\d\+\] ', "", "")
+		let start_at = g:jira_query_data.startAt + g:jira_query_data.maxResults
+		call Jira(query, {"start_at": start_at})
 		return
 	endif
 
@@ -223,6 +252,9 @@ function list_view#setup() abort
 	syntax match JiraPrompt '\%^>'
 	syntax match JiraPromptCount '\(\%^> \)\@2<=\[\d\+\]'
 	syntax match JiraQuery '\(\%^> \[\d\+\] \)\@10<=.*' contains=@JiraQueryElements
+
+	syntax match JiraPrompt '^>\( Next page \)\@='
+	syntax match JiraPromptCount '\(^>\)\@2<= Next page .*'
 
 	syntax case ignore
 	syntax keyword JQLKeywords AND IN OR NOT EMPTY ORDER BY WAS CHANGED contained
