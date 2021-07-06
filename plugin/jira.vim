@@ -16,6 +16,13 @@ command! -nargs=0 JiraToggleIssueView :call issue_view#toggle(utils#get_key())
 command! -nargs=* Jira :call Jira(<q-args>)
 
 function Jira(...) abort
+	for progname in ["curl", "fmt"]
+		if ! executable(progname)
+			echoerr "Required executable, " . progname . ", was not found"
+			return
+		endif
+	endfor
+
 	" List Window
 	let list_buf = list_view#the()
 	let list_win = win_findbuf(list_buf)
