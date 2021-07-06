@@ -138,7 +138,10 @@ function api#get_issue(callback, key, reload) abort
 				\ "key": issue.key,
 				\ "fields": {
 					\ "summary": issue.fields.summary,
-					\ "status": {"name": issue.fields.status.name},
+					\ "status": {
+						\ "name": issue.fields.status.name,
+						\ "category": issue.fields.status.statusCategory.name,
+					\ },
 				\ },
 			\ })
 		endfor

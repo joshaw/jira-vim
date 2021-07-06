@@ -189,7 +189,7 @@ function s:format_issue(issue, opts) abort
 		for epic_issue in a:issue.fields.epic_issues
 			call add(epic_issues, "    " . s:summarise_issue(epic_issue))
 			let counts.all += 1
-			if epic_issue.fields.status.name ==# "Done"
+			if epic_issue.fields.status.category ==# "Done"
 				let counts.done += 1
 			endif
 		endfor
