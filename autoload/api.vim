@@ -91,7 +91,8 @@ endfunction
 function api#search(callback, query) abort
 	let full_query = json_encode({
 		\ "jql": a:query,
-		\ "maxResults": 100,
+		\ "maxResults": get(g:, "jira_search_max_results", 100),
+		\ "startAt": 0,
 		\ "fields": [
 			\ "assignee",
 			\ "customfield_10005",
