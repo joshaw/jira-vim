@@ -90,8 +90,8 @@ function utils#get_initials(name) abort
 endfunction
 
 function utils#cache_file(fname) abort
-	let dir = get(environ(), "XDG_CACHE_HOME", fnamemodify("$HOME/.cache/", ":p"))
-	let dir .= "/jira/"
+	let dir = get(environ(), "XDG_CACHE_HOME", fnamemodify(expand("$HOME/.cache/"), ":p"))
+	let dir .= "jira/"
 
 	let cache_dir = get(g:, "jira_cache_dir", dir)
 
