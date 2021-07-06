@@ -52,6 +52,36 @@ function s:substitute_users(str) abort
 	\ )
 endfunction
 
+function s:format_links(str) abort
+	let str = a:str
+
+	" [ title | url | type ] -> [ title | url ]
+	let str = substitute(
+		\ str,
+		\ '\[\([^|\]]\+\)|\(https\?:\/\/[^|\]]\+\)|\([^|\]]\+\)\]',
+		\ '[\1|\2]',
+		\ "g"
+	\ )
+
+	" [ url | url ] -> url
+	let str = substitute(
+		\ str,
+		\ '\[\(https\?:\/\/[^|\]]\+\)|\1\]',
+		\ '\1',
+		\ "g"
+	\ )
+
+	" [ title | url ] -> title (url)
+	let str = substitute(
+		\ str,
+		\ '\[\([^|\]]\+\)|\(https\?:\/\/[^|\]]\+\)\]',
+		\ '\1 (\2)',
+		\ "g"
+	\ )
+
+	return str
+endfunction
+
 function s:format_issue(issue, opts) abort
 	if ! utils#issue_is_valid(a:issue)
 		if has_key(a:issue, "errorMessages")
@@ -235,7 +265,7 @@ function s:format_issue(issue, opts) abort
 	let description_str = a:issue.fields.description
 	if type(description_str) ==# v:t_string && len(trim(description_str)) > 0
 		let description = map(
-			\ s:wrap(s:substitute_users(description_str)),
+			\ s:wrap(s:substitute_users(s:format_links(description_str))),
 			\ {k,v -> substitute(substitute(v, "\r", "", ""), '^\|\n\zs', '│ ', "g")}
 		\ )
 
@@ -271,7 +301,7 @@ function s:format_issue(issue, opts) abort
 	let comments = []
 	for comment in reverse(a:issue.fields.comment.comments)
 		let head = printf("❱ %s %s", comment.author.displayName, s:date(comment.updated))
-		let comment.body = s:substitute_users(comment.body)
+		let comment.body = s:substitute_users(s:format_links(comment.body))
 		let body = map(s:wrap(comment.body), {k,v -> substitute(v, "\r", "", "")})
 		call extend(comments, ["", head] + body)
 	endfor
