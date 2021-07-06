@@ -17,6 +17,20 @@ COMMANDS
 :JiraToggleIssueView    Toggle the issue view window.
 
 
+MAPS
+                                                *jira_R*
+R                       Reload (re-download) the current issue.
+                        See |jira_cache|.
+
+                                                *jira_zv*
+zv                      Toggle the issue view window.
+
+                                                *jira_gx*
+gx                      Open the current issue is the browser.
+
+
+==============================================================================
+
 ISSUE LIST
 
 The issue list shows the results of the most recent query. It summarises the
@@ -39,6 +53,8 @@ MAPS
 <CR>                    If the cursor is on the query line, execute the query
                         and populate the issue list.
 
+
+==============================================================================
 
 ISSUE VIEW
 
@@ -109,10 +125,6 @@ MAPS
 
                                                 *jira_<C-R>*
 <C-R>                   Reload the current issue.
-
-                                                *jira_zv*
-zv                      Toggle the issue view window.
-
 
 CONFIGURATION
 
