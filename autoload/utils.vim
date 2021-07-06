@@ -201,8 +201,33 @@ function! utils#human_bytes(bytes)
 endfunction
 
 function utils#tab_align(list) abort
-	return systemlist(
-		\ ["column", "--table", "--separator=\t", "--output-separator= "],
-		\ a:list
-	\ )
+	let widths = []
+	for line in a:list
+		let i = 0
+		for item in line
+			if i >= len(widths)
+				call add(widths, len(item))
+			else
+				let widths[i] = max([strdisplaywidth(item), widths[i]])
+			endif
+			let i += 1
+		endfor
+	endfor
+
+	let output = []
+	for line in a:list
+		let i = 0
+		let new_line = []
+		for item in line
+			if i == len(widths) - 1
+				call add(new_line, item)
+			else
+				call add(new_line, item . repeat(" ", widths[i] - strdisplaywidth(item)))
+			endif
+			let i += 1
+		endfor
+		call add(output, join(new_line, " "))
+	endfor
+
+	return output
 endfunction

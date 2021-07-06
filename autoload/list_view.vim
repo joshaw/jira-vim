@@ -208,26 +208,26 @@ function list_view#format(list) abort
 
 		" Remove tab characters that mess with formatting
 		call map(fmt_issue, {k,v -> substitute(v, "\t", " ", "g")})
-		call add(issues, join(fmt_issue, "\t"))
+		call add(issues, fmt_issue)
 	endfor
 
-	let col_markers = join(range(count(issues[0], "\t") + 1), "\t")
+	let col_markers = range(len(issues[0]))
 	call insert(issues, col_markers)
 
 	return utils#tab_align(issues)
 endfunction
 
 function s:format_boards(boards) abort
-	let headers = ["KEY\tNAME\tDISPLAY NAME\tTYPE"]
+	let headers = [["KEY", "NAME", "DISPLAY NAME", "TYPE"]]
 	let fmt_boards = []
 	for board in a:boards.values
 		let is_project = has_key(board.location, "projectId")
-		call add(fmt_boards, join([
+		call add(fmt_boards, [
 			\ is_project ? board.location.projectKey : "-",
 			\ board.name,
 			\ board.location.displayName,
 			\ board.type,
-		\ ], "\t"))
+		\ ])
 	endfor
 
 	echo join(utils#tab_align(headers + sort(fmt_boards)), "\n")
