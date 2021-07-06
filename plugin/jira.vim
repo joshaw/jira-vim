@@ -36,8 +36,6 @@ function Jira(...) abort
 	elseif a:1 =~# '^\u\+-\d\+$'
 		let query = "key = " . a:1
 		call issue_view#load_previous_window(a:1)
-		call list_view#set(query, [])
-		return
 	else
 		let query = a:1
 	endif
