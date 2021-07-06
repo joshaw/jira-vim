@@ -386,7 +386,6 @@ function issue_view#set_summary(data, buf_nr) abort
 		return
 	endif
 
-	let total = a:data.total
 	let totals = {"statuses": {}, "projects": {}, "assignees": {}, "types": {}}
 	for issue in a:data.issues
 		let status = issue.fields.status.name
@@ -407,7 +406,12 @@ function issue_view#set_summary(data, buf_nr) abort
 	let text = [""]
 
 	let shown = a:data.total > a:data.maxResults
-		\ ? printf(" (shown %i)", a:data.maxResults)
+		\ ? printf(
+			\ " (showing %i to %i of %i)",
+			\ a:data.startAt + 1,
+			\ a:data.startAt + a:data.maxResults,
+			\ a:data.total
+		\ )
 		\ : ""
 	call add(text, printf("Total issues: %i%s", a:data.total, shown))
 
