@@ -91,13 +91,10 @@ endfunction
 
 function utils#cache_file(fname) abort
 	let dir = get(environ(), "XDG_CACHE_HOME", fnamemodify(expand("$HOME/.cache/"), ":p"))
-	let dir .= "jira/"
+	let dir .= "/jira/"
 
-	let cache_dir = get(g:, "jira_cache_dir", dir)
-
-	if cache_dir[-1:] !=# "/"
-		let cache_dir .= "/"
-	endif
+	let cache_dir = get(g:, "jira_cache_dir", dir) . "/"
+	let cache_dir = substitute(cache_dir, '/\+', "/", "g")
 
 	call mkdir(cache_dir, "p")
 	return cache_dir . a:fname
