@@ -3,26 +3,25 @@ function list_view#the() abort
 endfunction
 
 function list_view#set(query, data) abort
-	if has_key(a:data, "errorMessages")
-		let fmt_list = a:data.errorMessages
+	if has_key(a:data, "errorMessages") || has_key(a:data, "warningMessages")
+		let fmt_list = get(a:data, "errorMessages", []) + get(a:data, "warningMessages", [])
 	    let len = 0
 	elseif has_key(a:data, "issues")
 		let len = a:data.total
-		let fmt_list = list_view#format(a:data.issues)
-		call list_view#setup_highlighting(fmt_list[0])
-		let fmt_list = fmt_list[1:]
+		let [header; fmt_list] = list_view#format(a:data.issues)
+		call list_view#setup_highlighting(header)
+
+		if a:data.total > a:data.startAt + a:data.maxResults
+			let next_page = printf(
+				\ "> Next page (currently displaying %i to %i of %i)",
+				\ a:data.startAt + 1,
+				\ a:data.startAt + a:data.maxResults,
+				\ a:data.total
+			\ )
+			call add(fmt_list, next_page)
+		endif
 	else
 		echoerr "Could not understand response"
-	endif
-
-	if a:data.total > a:data.startAt + a:data.maxResults
-		let next_page = printf(
-			\ "> Next page (currently displaying %i to %i of %i)",
-			\ a:data.startAt + 1,
-			\ a:data.startAt + a:data.maxResults,
-			\ a:data.total
-		\ )
-		call add(fmt_list, next_page)
 	endif
 
 	let buf_contents = ["> [" . len . "] " . a:query] + fmt_list
