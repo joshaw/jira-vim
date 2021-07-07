@@ -617,7 +617,7 @@ function s:key_under_cursor() abort
 	return found_match
 endfunction
 
-function s:summarise_issue_echo(issue)
+function s:summarise_issue_echo(issue) abort
 	if ! utils#issue_is_valid(a:issue)
 		if has_key(a:issue, "errorMessages")
 			echo join(a:issue.errorMessages, "\n")
@@ -647,7 +647,7 @@ function s:summarise_issue_echo(issue)
 	echon ")"
 endfunction
 
-function s:summarise_issue(issue)
+function s:summarise_issue(issue) abort
 	if ! utils#issue_is_valid(a:issue)
 		if has_key(a:issue, "errorMessages")
 			echo join(a:issue.errorMessages, "\n")

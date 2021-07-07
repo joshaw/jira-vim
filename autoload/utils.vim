@@ -189,7 +189,7 @@ function utils#debug(str) abort
 	endif
 endfunction
 
-function! utils#human_bytes(bytes)
+function! utils#human_bytes(bytes) abort
 	let bytes = a:bytes
 	let sizes = ['B', 'KB', 'MB', 'GB']
 	let i = 0
