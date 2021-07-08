@@ -307,21 +307,21 @@ function list_view#setup_highlighting(markers) abort
 	let c1 = matchend(a:markers, '1\s\+', c0)
 	let c2 = matchend(a:markers, '2\s\+', c1)
 	let c3 = matchend(a:markers, '3\s\+', c2)
-	let c4 = matchend(a:markers, '4\s\+', c3)
+	let c4 = matchend(a:markers, '4$', c3)
 
 	exe 'syntax match JiraKey "\%<'.c0.'c\<\u\+-\d\+\>"'
 
-	exe 'syntax match JiraStatusBlocked "\%>'.c0.'c\<B\>\%<'.(c1+1).'c"'
-	exe 'syntax match JiraStatusDone "\%>'.c0.'c\<D\>\%<'.(c1+1).'c"'
-	exe 'syntax match JiraStatusInProgress "\%>'.c0.'c\<P\>\%<'.(c1+1).'c"'
-	exe 'syntax match JiraStatusToDo "\%>'.c0.'c\<T\>\%<'.(c1+1).'c"'
+	exe 'syntax match JiraStatusBlocked "\%>'.c0.'v\<B\>\%<'.(c1+1).'v"'
+	exe 'syntax match JiraStatusDone "\%>'.c0.'v\<D\>\%<'.(c1+1).'v"'
+	exe 'syntax match JiraStatusInProgress "\%>'.c0.'v\<P\>\%<'.(c1+1).'v"'
+	exe 'syntax match JiraStatusToDo "\%>'.c0.'v\<T\>\%<'.(c1+1).'v"'
 
-	exe 'syntax match JiraTypeBug "\%>'.c1.'c\<B\>\%<'.(c2+1).'c"'
-	exe 'syntax match JiraTypeEpic "\%>'.c1.'c\<E\>\%<'.(c2+1).'c"'
-	exe 'syntax match JiraTypeStory "\%>'.c1.'c\<S\>\%<'.(c2+1).'c"'
-	exe 'syntax match JiraTypeTask "\%>'.c1.'c\<T\>\%<'.(c2+1).'c"'
+	exe 'syntax match JiraTypeBug "\%>'.c1.'v\<B\>\%<'.(c2+1).'v"'
+	exe 'syntax match JiraTypeEpic "\%>'.c1.'v\<E\>\%<'.(c2+1).'v"'
+	exe 'syntax match JiraTypeStory "\%>'.c1.'v\<S\>\%<'.(c2+1).'v"'
+	exe 'syntax match JiraTypeTask "\%>'.c1.'v\<T\>\%<'.(c2+1).'v"'
 
 	let inits = utils#get_initials(utils#get_display_name())
-	exe 'syntax match JiraAssigneeMe "\%>'.c3.'c\<'.inits.'\>\%<'.(c4+1).'c"'
-	exe 'syntax match JiraAssigneeNone "\%>'.c3.'c\('.inits.'\)\@!\<\u\u\>\%<'.(c4+1).'c"'
+	exe 'syntax match JiraAssigneeMe "\%>'.c2.'v\<'.inits.'\>\%<'.(c3+1).'v"'
+	exe 'syntax match JiraAssigneeNone "\%>'.c2.'v\('.inits.'\)\@!\<\u\u\>\%<'.(c4+1).'v"'
 endfunction
