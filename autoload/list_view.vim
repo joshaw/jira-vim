@@ -210,6 +210,10 @@ function list_view#format(list) abort
 		call add(issues, fmt_issue)
 	endfor
 
+	if len(issues) == 0
+		return [""]
+	endif
+
 	let col_markers = range(len(issues[0]))
 	call insert(issues, col_markers)
 
@@ -295,6 +299,10 @@ function list_view#setup() abort
 endfunction
 
 function list_view#setup_highlighting(markers) abort
+	if empty(a:markers)
+		return
+	endif
+
 	let c0 = matchend(a:markers, '0\s\+')
 	let c1 = matchend(a:markers, '1\s\+', c0)
 	let c2 = matchend(a:markers, '2\s\+', c1)
