@@ -65,5 +65,8 @@ function Jira(...) abort
 		endif
 	endfunction
 
+	if empty(utils#get_display_name()) || empty(utils#get_account_id())
+		echomsg "Login failed. Will continue as anonymous user"
+	endif
 	call api#search({d -> s:search_callback(d)}, query, options)
 endfunction
