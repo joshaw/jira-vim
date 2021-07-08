@@ -17,7 +17,7 @@ let s:issue_type_abbreviations = {
 " Getter functions -------------------------
 
 function utils#get_display_name() abort
-	return utils#get_myself().display_name
+	return get(s:get_myself(), "display_name", "")
 endfunction
 
 function utils#get_issue_url(key) abort
@@ -41,7 +41,7 @@ function utils#get_atlassian_url() abort
 endfunction
 
 function utils#get_account_id() abort
-	return utils#get_myself().account_id
+	return get(s:get_myself(), "account_id", "")
 endfunction
 
 function utils#get_saved_queries() abort
@@ -65,18 +65,28 @@ function utils#echo(msg) abort
 	echo join(a:msg, "\n")
 endfunction
 
-function utils#get_myself() abort
+function s:get_myself() abort
 	function! s:set_myself(data, fname) abort
-		let s:display_name = a:data.displayName
-		let s:account_id = a:data.accountId
-		if ! empty(a:fname)
-			call writefile([json_encode(a:data)], a:fname)
+		let s:display_name = get(a:data, "displayName", -1)
+		let s:account_id = get(a:data, "accountId", -1)
+		if s:display_name != -1 && s:account_id != -1 && ! empty(a:fname)
+			let a:data.username = g:jira_username
+			call writefile([json_encode({
+				\ "username": g:jira_username,
+				\ "accountId": s:account_id,
+				\ "displayName": s:display_name,
+			\ })], a:fname)
 		endif
 	endfunction
 
 	let cache_file = utils#cache_file("myself.json")
+	let myself = {}
 	if filereadable(cache_file)
 		let myself = json_decode(join(readfile(cache_file), "\n"))
+	endif
+
+	if sort(keys(myself)) == ["accountId", "displayName", "username"]
+			\ && myself.username == g:jira_username
 		call s:set_myself(myself, "")
 	else
 		let jobid = api#get_myself({d -> s:set_myself(d, cache_file)})
