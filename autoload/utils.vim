@@ -166,7 +166,7 @@ function utils#issue_is_valid(issue) abort
 		return 0
 	endif
 
-	if ! has_key(a:issue, "key") || ! has_key(a:issue, "fields")
+	if ! utils#has_keys(a:issue, ["key", "fields"])
 		return 0
 	endif
 
@@ -195,6 +195,15 @@ function! utils#human_bytes(bytes) abort
 		let i += 1
 	endwhile
 	return bytes > 0 ? printf('%.1f%s', bytes, sizes[i]) : ''
+endfunction
+
+function utils#has_keys(dict, keys) abort
+	for key in a:keys
+		if ! has_key(a:dict, key)
+			return 0
+		endif
+	endfor
+	return 1
 endfunction
 
 function utils#tab_align(list) abort
