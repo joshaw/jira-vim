@@ -3,25 +3,38 @@ function list_view#the() abort
 endfunction
 
 function list_view#set(query, data) abort
-	if has_key(a:data, "errorMessages") || has_key(a:data, "warningMessages")
-		let fmt_list = get(a:data, "errorMessages", []) + get(a:data, "warningMessages", [])
-	    let len = 0
-	elseif has_key(a:data, "issues")
-		let len = a:data.total
-		let [header; fmt_list] = list_view#format(a:data.issues)
-		call list_view#setup_highlighting(header)
+	let len = 0
 
-		if a:data.total > a:data.startAt + a:data.maxResults
-			let next_page = printf(
-				\ "> Next page (currently displaying %i to %i of %i)",
-				\ a:data.startAt + 1,
-				\ a:data.startAt + a:data.maxResults,
-				\ a:data.total
-			\ )
-			call add(fmt_list, next_page)
+	if type(a:data) == v:t_dict
+		if utils#has_keys(a:data, ["issues", "maxResults", "startAt", "total"])
+			let len = a:data.total
+			let fmt_list = list_view#format(a:data.issues)
+			call list_view#setup_highlighting(fmt_list[0])
+			let fmt_list = fmt_list[1:]
+
+			if a:data.total > a:data.startAt + a:data.maxResults
+				let next_page = printf(
+					\ "> Next page (currently displaying %i to %i of %i)",
+					\ a:data.startAt + 1,
+					\ a:data.startAt + a:data.maxResults,
+					\ a:data.total
+				\ )
+				call add(fmt_list, next_page)
+			endif
+
+		elseif has_key(a:data, "errorMessages")
+			let fmt_list = a:data.errorMessages
+
+		elseif has_key(a:data, "warningMessages")
+			let fmt_list = a:data.warningMessages
+
+		else
+			let fmt_list = ["Could not understand response", string(a:data)]
 		endif
+	elseif type(a:data) == v:t_list
+		let fmt_list = map(a:data, {k,v -> type(v) == v:t_string ? v : string(v)})
 	else
-		echoerr "Could not understand response"
+		let fmt_list = [string(a:data)]
 	endif
 
 	let buf_contents = ["> [" . len . "] " . a:query] + fmt_list
@@ -188,10 +201,10 @@ function list_view#format(list) abort
 		let issue_type = issue.fields.issuetype.name
 		let issue_type = utils#clamp(get(utils#get_issue_type_abbreviations(), issue_type, issue_type), 10)
 
-		let sprints = issue.fields.customfield_10005
-		let most_recent_sprint = type(sprints) == v:t_list && len(sprints) > 0
-			\ ? s:sort_sprint_list(sprints)[0].shortname
-			\ : ""
+		"let sprints = issue.fields.customfield_10005
+		"let most_recent_sprint = type(sprints) == v:t_list && len(sprints) > 0
+		"	\ ? s:sort_sprint_list(sprints)[0].shortname
+		"	\ : ""
 
 		let assignee = type(issue.fields.assignee) == v:t_dict
 			\ ? utils#get_initials(issue.fields.assignee.displayName)

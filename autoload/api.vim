@@ -13,8 +13,10 @@ function s:jira_curl(callback, url, ...) abort
 		\ "--user", utils#get_username() . ":" . utils#get_password(),
 		\ "--header", "Content-Type: application/json",
 		\ "--header", "Accept: application/json",
-		\ "--silent",
 		\ "--compressed",
+		\ "--silent",
+		\ "--show-error",
+		\ "--stderr", "-",
 	\ ] + [full_url] + a:000
 
 	function! s:esc_cmd_for_print(arg) abort
@@ -39,21 +41,17 @@ function s:jira_curl(callback, url, ...) abort
 	return s:jobid
 endfunction
 
-function s:try_to_decode_json(callback, data) abort
-	if empty(a:data) || (len(a:data) == 1 && empty(a:data[0]))
-		return
-	endif
+function s:try_to_decode_json(data) abort
 	try
-		let data = json_decode(a:data)
+		return json_decode(a:data)
 	catch
-		return
+		return a:data
 	endtry
-	return call(a:callback, [data])
 endfunction
 
 function s:jira_curl_json(callback, url, ...) abort
 	return call("s:jira_curl", [
-		\ {"on_stdout": {j, data, e -> s:try_to_decode_json(a:callback, data)}},
+		\ {"on_stdout": {j, data, e -> call(a:callback, [s:try_to_decode_json(data)])}},
 		\ a:url,
 	\ ] + a:000)
 endfunction
