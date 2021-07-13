@@ -663,7 +663,10 @@ function s:summarise_issue(issue) abort
 endfunction
 
 function s:preview_issue_under_cursor() abort
-	call api#get_issue({d -> s:summarise_issue_echo(d)}, s:key_under_cursor(), 0)
+	let key = s:key_under_cursor()
+	if ! empty(key)
+		call api#get_issue({d -> s:summarise_issue_echo(d)}, key, 0)
+	endif
 endfunction
 
 function Foldtext() abort
