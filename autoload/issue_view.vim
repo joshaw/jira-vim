@@ -747,7 +747,7 @@ function issue_view#setup() abort
 endfunction
 
 function issue_view#open(key) abort
-	execute printf("%.0fsplit", winheight(0) * 0.7)
+	execute printf("belowright %.0fsplit", winheight(0) * 0.7)
 	call issue_view#load(a:key)
 endfunction
 
