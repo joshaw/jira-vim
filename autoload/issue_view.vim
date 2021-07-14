@@ -122,7 +122,7 @@ function s:format_issue(issue, opts) abort
 	\ )
 		let fix_vers = map(copy(a:issue.fields.fixVersions), {k,v -> v.name})
 		call reverse(sort(fix_vers, "N"))
-		call add(fix_versions, printf("  Version:  %s", join(fix_vers, ", ")))
+		call add(fix_versions, printf("Version:  %s", join(fix_vers, ", ")))
 	endif
 
 	let sprints = []
@@ -142,7 +142,7 @@ function s:format_issue(issue, opts) abort
 	endif
 
 	let parent_issue = has_key(a:issue.fields, "parent")
-		\ ? [printf("  Parent:   %s %s (%s)",
+		\ ? [printf("Parent:   %s %s (%s)",
 			\ a:issue.fields.parent.key,
 			\ a:issue.fields.parent.fields.summary,
 			\ a:issue.fields.parent.fields.status.name,
