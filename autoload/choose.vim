@@ -46,6 +46,17 @@ function choose#board(callback) abort
 	\ )})
 endfunction
 
+function choose#project(callback) abort
+	call api#get_projects({projects -> choose#generic(
+		\ a:callback,
+		\ "Choose project",
+		\ projects.values,
+		\ 0,
+		\ 0,
+		\ {v -> printf("%s %s (%s) - %s", v.key, v.name, v.projectTypeKey, v.lead.displayName)},
+	\ )})
+endfunction
+
 function choose#sprint(callback, board_id) abort
 	call api#get_sprints({sprints -> choose#generic(
 		\ a:callback,

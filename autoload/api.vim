@@ -179,6 +179,13 @@ function api#get_boards(callback) abort
 	return s:curl_cache(a:callback, utils#get_agile_url() . "/board", "boards.json", 0)
 endfunction
 
+function api#get_projects(callback) abort
+	let params = "?maxResults=50&orderBy=lastIssueUpdatedTime&expand=lead"
+	let url = "/project/search" . params
+	let fname = "projects.json"
+	call s:curl_cache(a:callback, url, fname, 0)
+endfunction
+
 function api#get_sprints(callback, board_id) abort
 	let url = utils#get_agile_url() . "/board/" . a:board_id . "/sprint?state=future,active"
 	let fname = "sprints-" . a:board_id . ".json"
