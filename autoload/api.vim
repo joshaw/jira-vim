@@ -25,14 +25,14 @@ function s:jira_curl(callback, url, ...) abort
 			\ : "'" . substitute(a:arg, "'", "\\\\'", "g") . "'"
 	endfunction
 
-	let a:callback.stdout_buffered = 1
-
 	if s:jobid > 0 && jobwait([s:jobid], 0)[0] == -1 " job still running
 		"echomsg "Stopping job with id, " . s:jobid
 		call jobstop(s:jobid)
 	endif
 
+	let a:callback.stdout_buffered = 1
 	let s:jobid = jobstart(full_cmd, a:callback)
+
 	if s:jobid < 0
 		let full_cmd_str = join(map(copy(full_cmd), {k,v -> s:esc_cmd_for_print(v)}), " ")
 		echoerr "Command failed: " . full_cmd_str

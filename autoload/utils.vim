@@ -172,7 +172,7 @@ function utils#key_is_valid(key) abort
 endfunction
 
 function utils#issue_is_valid(issue) abort
-	if ! type(a:issue) == v:t_dict
+	if type(a:issue) != v:t_dict
 		return 0
 	endif
 
