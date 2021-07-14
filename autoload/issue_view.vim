@@ -84,7 +84,7 @@ endfunction
 
 function s:format_issue(issue, opts) abort
 	if ! utils#issue_is_valid(a:issue)
-		if has_key(a:issue, "errorMessages")
+		if type(a:issue) == v:t_dict && has_key(a:issue, "errorMessages")
 			return ["Error:"] + a:issue.errorMessages
 		endif
 		return [json_encode(a:issue)]
