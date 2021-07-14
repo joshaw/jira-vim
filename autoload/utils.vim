@@ -1,18 +1,18 @@
-let s:status_abbreviations = {
+let g:jira_status_abbreviations = get(g:, "jira_status_abbreviations", {
 	\ "Blocked": "B",
 	\ "Done": "D",
 	\ "In Progress": "P",
 	\ "Open": "O",
 	\ "To Do": "T",
 	\ "New": "T",
-\ }
+\ })
 
-let s:issue_type_abbreviations = {
+let g:jira_issue_type_abbreviations = get(g:, "jira_issue_type_abbreviations", {
 	\ "Bug": "B",
 	\ "Epic": "E",
 	\ "Story": "S",
 	\ "Task": "T",
-\ }
+\ })
 
 " Getter functions -------------------------
 
@@ -52,11 +52,11 @@ function utils#get_saved_queries() abort
 endfunction
 
 function utils#get_status_abbreviations() abort
-	return s:status_abbreviations
+	return g:jira_status_abbreviations
 endfunction
 
 function utils#get_issue_type_abbreviations() abort
-	return s:issue_type_abbreviations
+	return g:jira_issue_type_abbreviations
 endfunction
 
 " Utility functions ----------------------------

@@ -162,6 +162,23 @@ limits in force.
 >
     let g:jira_search_max_results = 200
 <
+                                                *g:jira_status_abbreviations*
+                                                *g:jira_issue_type_abbreviations*
+Set the abbreviations that are displayed in the "status" and "issue type"
+columns in the issue view:
+>
+    let g:jira_status_abbreviations = {
+        \ "Todo": "T",
+        \ "Done": "D",
+        \ "In Progress": "P",
+    \ }
+
+    let g:jira_issue_type_abbreviations = {
+        \ "Bug": "B",
+        \ "Task": "T",
+        \ "Epic": "E",
+    \ }
+<
                                                 *jira_saved_queries*
 SAVED QUERIES
 
