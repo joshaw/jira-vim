@@ -542,13 +542,28 @@ function s:do_watch(key) abort
 endfunction
 
 function s:list_watchers(key) abort
-	call api#get_watchers(
-		\ {watchers -> utils#echo(
-			\ [printf("%s has %i watchers:", a:key, watchers.watchCount)]
-			\ + sort(map(watchers.watchers, {k,v -> "  " . v.displayName}))
-		\ )},
-		\ a:key
-	\ )
+	function! s:print_watchers(watchers) abort closure
+		if a:watchers.watchCount > 0 && len(a:watchers.watchers) == 0
+			let extra_msg = ", but you don't have permission to list them."
+		elseif len(a:watchers.watchers) == 0
+			let extra_msg = "."
+		else
+			let list = join(sort(map(
+				\ a:watchers.watchers,
+				\ {k,v -> "  " . v.displayName}
+			\ )), "\n")
+			let extra_msg = ":\n" . list
+		endif
+
+		echo printf(
+			\ "%s has %i watchers%s",
+			\ a:key,
+			\ a:watchers.watchCount,
+			\ extra_msg
+		\ )
+	endfunction
+
+	call api#get_watchers({watchers -> s:print_watchers(watchers)}, a:key)
 endfunction
 
 function s:assign_issue_to_sprint(key) abort
