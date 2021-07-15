@@ -183,15 +183,6 @@ function s:create_issue() abort
 	\ )})
 endfunction
 
-function s:sort_sprint_list(sprints) abort
-	let sprints = []
-	for sprint in copy(a:sprints)
-		let sprint.shortname = utils#sprint_short_name(sprint.name)
-		call add(sprints, sprint)
-	endfor
-	return sort(sprints, {i1, i2 -> i2.id - i1.id})
-endfunction
-
 function list_view#format(list) abort
 	let issues = []
 	for issue in a:list
@@ -200,11 +191,6 @@ function list_view#format(list) abort
 
 		let issue_type = issue.fields.issuetype.name
 		let issue_type = utils#clamp(get(utils#get_issue_type_abbreviations(), issue_type, issue_type), 10)
-
-		"let sprints = issue.fields.customfield_10005
-		"let most_recent_sprint = type(sprints) == v:t_list && len(sprints) > 0
-		"	\ ? s:sort_sprint_list(sprints)[0].shortname
-		"	\ : ""
 
 		let assignee = type(issue.fields.assignee) == v:t_dict
 			\ ? utils#get_initials(issue.fields.assignee.displayName)

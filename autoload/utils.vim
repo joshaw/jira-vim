@@ -163,10 +163,6 @@ function utils#get_key() abort
 	return matchstr(getline("."), '^ \?\zs\u\+-\d\+')
 endfunction
 
-function utils#sprint_short_name(name) abort
-	return substitute(a:name, '\(DevOps\|Exonar\) Sprint ', "", "")
-endfunction
-
 function utils#key_is_valid(key) abort
 	return match(a:key, '\u\+-\d\+') >= 0
 endfunction
