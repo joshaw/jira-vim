@@ -126,14 +126,9 @@ function s:format_issue(issue, opts) abort
 	endif
 
 	let sprints = []
-	if (
-		\ type(get(a:issue.fields, "customfield_10005", v:null)) == v:t_list
-		\ && len(a:issue.fields.customfield_10005) > 0
-	\ )
-
-		let sprint_list = map(copy(a:issue.fields.customfield_10005),
-			\ {k,v -> utils#sprint_short_name(v.name)}
-		\ )
+	let orig_sprints = get(a:issue.fields, "customfield_10005", [])
+	if type(orig_sprints) == v:t_list && len(orig_sprints) > 0
+		let sprint_list = map(copy(orig_sprints), {k,v -> v.name})
 
 		let sprints = [printf("Sprints:  (%i) %s",
 			\ len(sprint_list),
@@ -150,12 +145,10 @@ function s:format_issue(issue, opts) abort
 		\ : []
 
 	let issuelinks = []
-	if (
-		\ type(get(a:issue.fields, "issuelinks", v:null)) == v:t_list
-		\ && len(a:issue.fields.issuelinks) > 0
-	\ )
+	let orig_issuelinks = get(a:issue.fields, "issuelinks", [])
+	if type(orig_issuelinks) == v:t_list && len(orig_issuelinks) > 0
 		call add(issuelinks, "Issue Links:")
-		for link in a:issue.fields.issuelinks
+		for link in orig_issuelinks
 			if has_key(link, "inwardIssue")
 				let type = "inward"
 			elseif has_key(link, "outwardIssue")
