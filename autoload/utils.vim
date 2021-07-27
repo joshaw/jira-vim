@@ -62,7 +62,20 @@ endfunction
 " Utility functions ----------------------------
 
 function utils#echo(msg) abort
-	echo join(a:msg, "\n")
+	if type(a:msg) == v:t_string
+		echo a:msg
+		return
+	endif
+
+	if type(a:msg) == v:t_list
+		" A list of just strings
+		if uniq(map(copy(a:msg), {k,v -> type(v)})) == [v:t_string]
+			echo join(a:msg, "\n")
+			return
+		endif
+	endif
+
+	echo string(a:msg)
 endfunction
 
 function s:get_myself() abort
