@@ -108,7 +108,7 @@ function s:format_issue(issue, opts) abort
 		\ s:date(a:issue.fields.updated),
 	\ )
 
-	let assignee = printf("%s (created by %s)",
+	let assignee = printf("%s (reported by %s)",
 		\ type(a:issue.fields.assignee) == v:t_dict
 			\ ? a:issue.fields.assignee.displayName
 			\ : "none",
