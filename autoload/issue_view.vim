@@ -292,7 +292,11 @@ function s:format_issue(issue, opts) abort
 	\ ]
 
 	let comments = []
-	for comment in reverse(a:issue.fields.comment.comments)
+	let ordered_comment_list = get(g:, "jira_comments_newest_first", 0)
+		\ ? reverse(copy(a:issue.fields.comment.comments))
+		\ : a:issue.fields.comment.comments
+
+	for comment in ordered_comment_list
 		let head = printf("❱ %s %s", comment.author.displayName, s:date(comment.updated))
 		let comment.body = s:substitute_users(s:format_links(comment.body))
 		let body = map(s:wrap(comment.body), {k,v -> substitute(v, "\r", "", "")})

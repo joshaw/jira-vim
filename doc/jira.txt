@@ -179,6 +179,11 @@ columns in the issue view:
         \ "Epic": "E",
     \ }
 <
+                                                *g:jira_comments_newest_first*
+Order comments with newest first, rather than the default of last:
+>
+    let g:jira_comments_newest_first = 1
+<
                                                 *jira_saved_queries*
 SAVED QUERIES
 
