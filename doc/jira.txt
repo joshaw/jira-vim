@@ -55,6 +55,11 @@ list of issues and is used to navigate between issues.
 :JiraListProjects       Show a summary list of the Jira projects available to
                         the current user.
 
+                                                *:JiraListVersions*
+:JiraListVersions {project}
+                        Show a summary list of the versions for the given Jira
+                        project.
+
                                                 *jira_issue-list_maps*
 MAPS
 

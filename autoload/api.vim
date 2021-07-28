@@ -238,6 +238,10 @@ function api#get_users() abort
 	call s:jira_curl_json({users -> s:format_users(users)}, "/users/search?maxResults=1000")
 endfunction
 
+function api#get_versions(callback, project) abort
+	call s:jira_curl_json(a:callback, "/project/" . a:project . "/versions")
+endfunction
+
 " PUT functions
 
 function api#claim_issue(callback, key) abort

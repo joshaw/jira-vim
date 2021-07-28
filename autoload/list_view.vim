@@ -240,6 +240,20 @@ function s:format_projects(projects) abort
 	echo join(utils#tab_align(headers + fmt_projects), "\n")
 endfunction
 
+function s:format_versions(versions) abort
+	let headers = [["NAME", "RELEASED", "START DATE", "RELEASE DATE", "ARCHIVED", "DESCRIPTION"]]
+	let fmt_versions = map(a:versions, {k,v -> [
+		\ v.name,
+		\ v.released ? "yes" : "no",
+		\ get(v, "startDate", ""),
+		\ get(v, "releaseDate", ""),
+		\ v.archived ? "yes" : "no",
+		\ get(v, "description", "")
+	\ ]})
+
+	echo join(utils#tab_align(headers + fmt_versions), "\n")
+endfunction
+
 function list_view#setup() abort
 
 	setlocal buftype=nofile
@@ -293,6 +307,7 @@ function list_view#setup() abort
 	command! -buffer -nargs=0 JiraCacheSummary :call s:cache_summary()
 	command! -buffer -nargs=0 JiraListBoards :call api#get_boards({boards -> s:format_boards(boards)})
 	command! -buffer -nargs=0 JiraListProjects :call api#get_projects({projects -> s:format_projects(projects)})
+	command! -buffer -nargs=1 JiraListVersions :call api#get_versions({versions -> s:format_versions(versions)}, <q-args>)
 
 	augroup jira
 		autocmd!
