@@ -221,16 +221,12 @@ endfunction
 
 function s:format_boards(boards) abort
 	let headers = [["KEY", "NAME", "DISPLAY NAME", "TYPE"]]
-	let fmt_boards = []
-	for board in a:boards.values
-		let is_project = has_key(board.location, "projectId")
-		call add(fmt_boards, [
-			\ is_project ? board.location.projectKey : "-",
-			\ board.name,
-			\ board.location.displayName,
-			\ board.type,
-		\ ])
-	endfor
+	let fmt_boards = map(a:boards.values, {k,v -> [
+		\ has_key(v.location, "projectId") ? v.location.projectKey : "-",
+		\ v.name,
+		\ v.location.displayName,
+		\ v.type
+	\ ]})
 
 	echo join(utils#tab_align(headers + sort(fmt_boards)), "\n")
 endfunction
