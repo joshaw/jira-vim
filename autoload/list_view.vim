@@ -254,6 +254,25 @@ function s:format_versions(versions) abort
 	echo join(utils#tab_align(headers + fmt_versions), "\n")
 endfunction
 
+function s:format_components(components) abort
+	if len(a:components) == 0
+		return
+	endif
+	let headers = [["COMPONENT", "DESCRIPTION"]]
+	let fmt_components = map(a:components, {k,v -> [v.name, get(v, "description", "")]})
+
+	echo join(utils#tab_align(headers + fmt_components), "\n")
+endfunction
+
+function s:list_components(project) abort
+	let List_components_aux = {project -> api#get_components({components -> s:format_components(components)}, project)}
+	if empty(trim(a:project))
+		call choose#project({project -> List_components_aux(project.key)})
+	else
+		call List_components_aux(a:project)
+	endif
+endfunction
+
 function list_view#setup() abort
 
 	setlocal buftype=nofile
@@ -309,6 +328,7 @@ function list_view#setup() abort
 	command! -buffer -nargs=0 JiraListBoards :call api#get_boards({boards -> s:format_boards(boards)})
 	command! -buffer -nargs=0 JiraListProjects :call api#get_projects({projects -> s:format_projects(projects)})
 	command! -buffer -nargs=1 JiraListVersions :call api#get_versions({versions -> s:format_versions(versions)}, <q-args>)
+	command! -buffer -nargs=? JiraListComponents :call s:list_components(<q-args>)
 
 	augroup jira
 		autocmd!
