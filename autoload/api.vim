@@ -111,6 +111,7 @@ function api#get_issue(callback, key, reload) abort
 		\ "author",
 		\ "changelog",
 		\ "comment",
+		\ "components",
 		\ "created",
 		\ "creator",
 		\ "customfield_10005",

@@ -129,6 +129,12 @@ function s:format_issue(issue, opts) abort
 		let affects_versions = [printf("Affects:  %s", join(affects_versions, ", "))]
 	endif
 
+	let components = get(a:issue.fields, "components", v:null)
+	if type(components) == v:t_list && len(components) > 0
+		call map(components, {k,v -> v.name})
+		let components = [printf("Components:  %s", join(components, ", "))]
+	endif
+
 	let sprints = []
 	let orig_sprints = get(a:issue.fields, "customfield_10005", [])
 	if type(orig_sprints) == v:t_list && len(orig_sprints) > 0
@@ -317,6 +323,7 @@ function s:format_issue(issue, opts) abort
 	\ ]
 	\ + fix_versions
 	\ + affects_versions
+	\ + components
 	\ + sprints
 	\ + parent_issue
 	\ + issuelinks
