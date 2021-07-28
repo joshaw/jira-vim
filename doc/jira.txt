@@ -45,7 +45,15 @@ list of issues and is used to navigate between issues.
 :JiraCacheSummary       Show a summary of the cache directory (by default set
                         to `$XDG_CACHE_HOME/jira`), size, number of files.
 
-:JiraCreateIssue        Non-functional!
+:JiraCreateIssue        Non-functional (yet)!
+
+                                                *:JiraListBoards*
+:JiraListBoards         Show a summary list of the Jira boards available to
+                        the current user.
+
+                                                *:JiraListProjects*
+:JiraListProjects       Show a summary list of the Jira projects available to
+                        the current user.
 
                                                 *jira_issue-list_maps*
 MAPS

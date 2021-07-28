@@ -231,6 +231,15 @@ function s:format_boards(boards) abort
 	echo join(utils#tab_align(headers + sort(fmt_boards)), "\n")
 endfunction
 
+function s:format_projects(projects) abort
+	let headers = [["KEY", "NAME", "LEAD", "STYLE", "TYPE"]]
+	let fmt_projects = sort(map(a:projects.values,
+		\ {k,v -> [v.key, v.name, v.lead.displayName, v.style, v.projectTypeKey]}
+	\ ))
+
+	echo join(utils#tab_align(headers + fmt_projects), "\n")
+endfunction
+
 function list_view#setup() abort
 
 	setlocal buftype=nofile
@@ -283,6 +292,7 @@ function list_view#setup() abort
 	command! -buffer -nargs=0 JiraCreateIssue :call s:create_issue()
 	command! -buffer -nargs=0 JiraCacheSummary :call s:cache_summary()
 	command! -buffer -nargs=0 JiraListBoards :call api#get_boards({boards -> s:format_boards(boards)})
+	command! -buffer -nargs=0 JiraListProjects :call api#get_projects({projects -> s:format_projects(projects)})
 
 	augroup jira
 		autocmd!
