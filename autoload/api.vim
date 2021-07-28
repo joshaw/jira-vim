@@ -124,6 +124,7 @@ function api#get_issue(callback, key, reload) abort
 		\ "status",
 		\ "summary",
 		\ "updated",
+		\ "versions",
 		\ "watches",
 	\ ], ",")
 

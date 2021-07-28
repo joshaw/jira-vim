@@ -115,14 +115,18 @@ function s:format_issue(issue, opts) abort
 		\ a:issue.fields.reporter.displayName,
 	\ )
 
-	let fix_versions = []
-	if (
-		\ type(get(a:issue.fields, "fixVersions", v:null)) == v:t_list
-		\ && len(a:issue.fields.fixVersions) > 0
-	\ )
-		let fix_vers = map(copy(a:issue.fields.fixVersions), {k,v -> v.name})
-		call reverse(sort(fix_vers, "N"))
-		call add(fix_versions, printf("Version:  %s", join(fix_vers, ", ")))
+	let fix_versions = get(a:issue.fields, "fixVersions", v:null)
+	if type(fix_versions) == v:t_list && len(fix_versions) > 0
+		call map(fix_versions, {k,v -> v.name})
+		call reverse(sort(fix_versions, "N"))
+		let fix_versions = [printf("Fixed in: %s", join(fix_versions, ", "))]
+	endif
+
+	let affects_versions = get(a:issue.fields, "versions", v:null)
+	if type(affects_versions) == v:t_list && len(affects_versions) > 0
+		call map(affects_versions, {k,v -> v.name})
+		call reverse(sort(affects_versions, "N"))
+		let affects_versions = [printf("Affects:  %s", join(affects_versions, ", "))]
 	endif
 
 	let sprints = []
@@ -312,6 +316,7 @@ function s:format_issue(issue, opts) abort
 		\ "Created:  " . dates,
 	\ ]
 	\ + fix_versions
+	\ + affects_versions
 	\ + sprints
 	\ + parent_issue
 	\ + issuelinks
