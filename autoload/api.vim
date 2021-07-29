@@ -85,7 +85,7 @@ endfunction
 " GET functions
 
 function api#get_myself(callback) abort
-	return s:jira_curl_json(a:callback, "/myself")
+	return s:jira_curl_json(a:callback, "/myself?expand=groups,applicationRoles")
 endfunction
 
 function api#search(callback, query, options) abort

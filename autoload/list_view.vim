@@ -285,6 +285,26 @@ function s:list_components(project) abort
 	endif
 endfunction
 
+function s:show_current_user() abort
+	function! s:show_current_user_aux(user) abort
+		let items = []
+		for [key,value] in sort(items(a:user), {a,b -> a[0] - b[0]})
+			if index(["avatarUrls", "expand", "self"], key) >= 0
+				continue
+			endif
+
+			if key == "applicationRoles" || key == "groups"
+				let value = map(value.items, {k,v -> v.name})
+			endif
+
+			let value = type(value) == v:t_bool ? (value ? 'yes' : 'no') : value
+			call add(items, [key . ":", value])
+		endfor
+		echo join(utils#tab_align(items), "\n")
+	endfunction
+	call api#get_myself({myself -> s:show_current_user_aux(myself)})
+endfunction
+
 function list_view#setup() abort
 
 	setlocal buftype=nofile
@@ -341,6 +361,7 @@ function list_view#setup() abort
 	command! -buffer -nargs=0 JiraListProjects :call api#get_projects({projects -> s:format_projects(projects)})
 	command! -buffer -nargs=? JiraListVersions :call s:list_versions(<q-args>)
 	command! -buffer -nargs=? JiraListComponents :call s:list_components(<q-args>)
+	command! -buffer -nargs=0 JiraCurrentUser :call s:show_current_user()
 
 	augroup jira
 		autocmd!
