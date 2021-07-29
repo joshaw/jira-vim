@@ -241,7 +241,10 @@ function api#get_users() abort
 endfunction
 
 function api#get_versions(callback, project) abort
-	call s:jira_curl_json(a:callback, "/project/" . a:project . "/versions")
+	let url = "/project/" . a:project . "/versions"
+	let fname = "versions-" . a:project . ".json"
+	call s:curl_cache(a:callback, url, fname, 0)
+endfunction
 
 function api#get_components(callback, project) abort
 	let url = "/project/" . a:project . "/components"
