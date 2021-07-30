@@ -3,8 +3,8 @@
 
 augroup Jira
 	autocmd!
-	autocmd BufReadCmd jira://* :call issue_view#read_cmd(expand('<afile>'))
-	autocmd BufWriteCmd jira://* :call issue_view#post_comment(b:jira_issue.key)
+	autocmd BufReadCmd jira://* ++nested :call issue_view#read_cmd(expand('<afile>'))
+	autocmd BufWriteCmd jira://* ++nested :call issue_view#write_cmd(expand('<afile>'))
 augroup END
 
 "nnoremap <silent> <tab> :wincmd w<CR>

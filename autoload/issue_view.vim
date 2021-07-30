@@ -389,6 +389,8 @@ function issue_view#read_cmd(file) abort
 
 	if a:file ==# "jira://summary"
 		call issue_view#set_summary(g:jira_query_data, buf_nr)
+	elseif a:file ==# "jira://create"
+		call issue_view#set_create(buf_nr)
 	else
 		let key = matchstr(a:file, 'jira://\zs\u\+-\d\+')
 		call setbufline(buf_nr, 1, ["", "Loading..."])
@@ -398,6 +400,14 @@ function issue_view#read_cmd(file) abort
 			\ v:cmdbang,
 		\ )
 	endif
+endfunction
+
+function issue_view#set_create(buf_nr) abort
+	let buf_contents = readfile(utils#cache_file("create.txt"))
+
+	silent call deletebufline(a:buf_nr, 1, "$")
+	call setbufline(a:buf_nr, 1, buf_contents)
+	call setbufvar(a:buf_nr, "&modified", 0)
 endfunction
 
 function issue_view#set_summary(data, buf_nr) abort
@@ -457,7 +467,41 @@ function issue_view#set_summary(data, buf_nr) abort
 	call setbufvar(a:buf_nr, "&modified", 0)
 endfunction
 
-function issue_view#post_comment(key) abort
+function s:write_cmd_create() abort
+	"TODO
+	let new_issue = {}
+	let desc_start = 0
+	for line in getline(0, '$')
+		let desc_start += 1
+		let parts = split(line, ":", 1)
+		if len(parts) != 2
+			continue
+		endif
+
+		let parts[1] = trim(parts[1])
+
+		if parts[0] ==# "Reporter"
+			let new_issue.reporter = {"displayName": parts[1]}
+		elseif parts[0] ==# "Project"
+			let new_issue.project = {"key": parts[1]}
+		elseif parts[0] ==# "Issue Type"
+			let new_issue.issueType = {"name": parts[1]}
+		elseif parts[0] ==# "Summary"
+			let new_issue.summary = parts[1]
+		elseif parts[0] ==# "Description"
+			break
+		endif
+	endfor
+
+	let new_issue.description = trim(join(getline(desc_start, "$"), "\n"))
+	echo json_encode(new_issue)
+	setlocal nomodified
+	call issue_view#load("DN-1997")
+	" TODO: test this
+	"call api#create_issue({issue -> issue_view#load(issue.key)}, new_issue)
+endfunction
+
+function s:write_cmd_comment(key) abort
 	let start_marker = get(b:, "jira_comment_id", 0) > 0
 		\ ? search("^-- Edit comment: {{{$", "n")
 		\ : search("^-- Add comment: {{{$", "n")
@@ -488,6 +532,21 @@ function issue_view#post_comment(key) abort
 
 	unlet! b:jira_comment_id
 	setlocal nomodified
+endfunction
+
+function issue_view#write_cmd(fname) abort
+	if a:fname ==# "jira://create"
+		call s:write_cmd_create()
+		return
+	endif
+
+	let key = matchstr(a:fname, '^jira://\zs[A-Z]\+-[0-9]\+$')
+	if !empty(key)
+		call s:write_cmd_comment(key)
+		return
+	endif
+
+	echoerr "Don't know how to write " . a:fname
 endfunction
 
 function s:do_transition(issue, ...) abort

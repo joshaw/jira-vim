@@ -132,54 +132,34 @@ endfunction
 " TODO This is still in progress
 function s:create_issue() abort
 	function! s:format_create_meta(issue_type, project_key) abort
-		let buf_contents = ["# Create issue for " . a:project_key]
-		for [name, field] in items(a:issue_type.fields)
-			let required = field.required ? "*" : ""
-			call add(buf_contents, printf("-> %s%s [%s]:",
-				\ field.name,
-				\ required,
-				\ field.schema.type,
-			\ ))
+		let buf_contents = [
+			\ "Reporter:   " . utils#get_display_name(),
+			\ "Project:    " . a:project_key,
+			\ "Issue type: " . a:issue_type.name,
+			\ "",
+			\ "Summary: ",
+			\ "",
+			\ "Description:",
+			\ "",
+		\ ]
+		call writefile(buf_contents, utils#cache_file("create.txt"))
 
-			if field.hasDefaultValue && has_key(field, "defaultValue")
-				let default_value = field.defaultValue
-				if field.name == "Priority"
-					let default_value = {
-						\ "id": field.defaultValue.id,
-						\ "name": field.defaultValue.name
-					\ }
-				endif
-				call add(buf_contents, "Default: " . json_encode(default_value))
-			endif
-
-			if field.name == "Reporter"
-				call add(buf_contents, json_encode({"id": utils#get_account_id()}))
-
-			elseif field.name == "Project"
-				call add(buf_contents, a:project_key)
-
-			elseif field.name == "Project"
-				call add(buf_contents, a:project_key)
-
-			elseif field.name == "Issue Type"
-				call add(buf_contents, json_encode({
-					\ "id": a:issue_type.id,
-					\ "name": a:issue_type.name
-				\ }))
-			endif
-
-			call add(buf_contents, "")
-		endfor
-		redraw
-		echo join(buf_contents, "\n")
+		if len(getwininfo()) < 2
+			call issue_view#open("create")
+		else
+			wincmd p
+			call issue_view#load("create")
+		endif
 	endfunction
 
-	call choose#board({board -> api#get_create_metadata(
-		\ {create_meta -> choose#issue_type(
-			\ {create_meta_type -> s:format_create_meta(create_meta_type, board.location.projectKey)},
-			\ create_meta.projects[0].issuetypes
-		\ )},
-		\ board.location.projectKey,
+	call choose#project({project -> api#get_create_metadata(
+		\ {create_meta -> len(create_meta.projects) == 0
+			\ ? utils#echo("You don't have permission to create issues in that project")
+			\ : choose#issue_type(
+				\ {create_meta_type -> s:format_create_meta(create_meta_type, project.key)},
+				\ create_meta.projects[0].issuetypes
+			\ )},
+		\ project.key,
 	\ )})
 endfunction
 

@@ -346,3 +346,11 @@ function api#assign_issue_to_epic(callback, key, epic_id) abort
 		\ "--data", json_encode({"issues": [a:key]}),
 	\ )
 endfunction
+
+function api#create_issue(callback, data) abort
+	call s:jira_curl(
+		\ {"on_exit": {j, d, e -> d == 0 && call(a:callback, [])}},
+		\ "/issue",
+		\ "--data", json_encode({"fields": a:data}),
+	\ )
+endfunction
