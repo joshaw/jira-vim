@@ -230,8 +230,9 @@ function utils#tab_align(list) abort
 	for line in a:list
 		let i = 0
 		for item in line
+			let item = type(item) == v:t_string ? item : string(item)
 			if i >= len(widths)
-				call add(widths, len(item))
+				call add(widths, strdisplaywidth(item))
 			else
 				let widths[i] = max([strdisplaywidth(item), widths[i]])
 			endif
@@ -244,6 +245,7 @@ function utils#tab_align(list) abort
 		let i = 0
 		let new_line = []
 		for item in line
+			let item = type(item) == v:t_string ? item : string(item)
 			if i == len(widths) - 1
 				call add(new_line, item)
 			else
