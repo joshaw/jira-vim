@@ -12,6 +12,7 @@ function s:jira_curl(callback, url, ...) abort
 		\ "--header", "Content-Type: application/json",
 		\ "--header", "Accept: application/json",
 		\ "--compressed",
+		\ "--max-time", "20",
 		\ "--silent",
 		\ "--show-error",
 		\ "--stderr", "-",
