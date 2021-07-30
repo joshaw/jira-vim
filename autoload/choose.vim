@@ -21,6 +21,7 @@ function choose#generic(callback, prompt, data, f_filter, f_sort, f_format) abor
 		return
 	endif
 	let datum = data[choice - 1]
+	redraw
 	call call(a:callback, [datum])
 endfunction
 
