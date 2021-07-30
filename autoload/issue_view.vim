@@ -9,9 +9,19 @@ endfunction
 
 let s:date_cache = {}
 function s:date(str) abort
-	let date_ts = has_key(s:date_cache, a:str)
-		\ ? s:date_cache[a:str]
-		\ : str2nr(systemlist(["date", "--date", a:str, "+%s"])[0])
+	if has_key(s:date_cache, a:str)
+		let date_ts = s:date_cache[a:str]
+	else
+		" Remove fractional seconds
+		let str = substitute(a:str, '\.\d\++', "+", "")
+		if has("*strptime")
+			let date_ts = strptime("%Y-%m-%dT%H:%M:%S%z", str)
+		elseif has("macunix")
+			let date_ts = str2nr(systemlist(["date", "-j", "-f", "%FT%T%z", str, "+%s"])[0])
+		else
+			let date_ts = str2nr(systemlist(["date", "--date", a:str, "+%s"])[0])
+		endif
+	endif
 
 	let s:date_cache[a:str] = date_ts
 
