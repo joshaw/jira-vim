@@ -1,6 +1,4 @@
 " Jira API functions ------------------------
-let s:jobid = -1
-
 function s:jira_curl(callback, url, ...) abort
 	if a:url =~? '^https\?://'
 		let full_url = a:url
@@ -19,26 +17,14 @@ function s:jira_curl(callback, url, ...) abort
 		\ "--stderr", "-",
 	\ ] + [full_url] + a:000
 
-	function! s:esc_cmd_for_print(arg) abort
-		return a:arg =~# '^[a-zA-Z_-]\+$'
-			\ ? a:arg
-			\ : "'" . substitute(a:arg, "'", "\\\\'", "g") . "'"
-	endfunction
-
-	if s:jobid > 0 && jobwait([s:jobid], 0)[0] == -1 " job still running
-		"echomsg "Stopping job with id, " . s:jobid
-		call jobstop(s:jobid)
-	endif
-
 	let a:callback.stdout_buffered = 1
-	let s:jobid = jobstart(full_cmd, a:callback)
+	let jobid = jobstart(full_cmd, a:callback)
 
-	if s:jobid < 0
-		let full_cmd_str = join(map(copy(full_cmd), {k,v -> s:esc_cmd_for_print(v)}), " ")
-		echoerr "Command failed: " . full_cmd_str
+	if jobid < 0
+		echoerr "Executable not found, " . full_cmd[0]
 	endif
 	call utils#debug("Started job: " . s:jobid)
-	return s:jobid
+	return jobid
 endfunction
 
 function s:try_to_decode_json(data) abort
