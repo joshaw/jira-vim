@@ -214,8 +214,8 @@ function api#get_transitions(callback, key) abort
 	call s:jira_curl_json(a:callback, "/issue/" . a:key . "/transitions")
 endfunction
 
-function api#get_users() abort
-	function! s:format_users(users) abort
+function api#get_users(callback) abort
+	function! s:format_users(callback, users) abort
 		if type(a:users) != v:t_list
 			return
 		endif
@@ -231,8 +231,9 @@ function api#get_users() abort
 		endfor
 		let fname = utils#cache_file("users.json")
 		call writefile([json_encode(users_dict)], fname)
+		call call(a:callback, [users_dict])
 	endfunction
-	call s:jira_curl_json({users -> s:format_users(users)}, "/users/search?maxResults=1000")
+	call s:jira_curl_json({users -> s:format_users(a:callback, users)}, "/users/search?maxResults=1000")
 endfunction
 
 function api#get_versions(callback, project) abort

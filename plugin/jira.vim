@@ -14,6 +14,7 @@ nnoremap <silent> zv :call issue_view#toggle(utils#get_key())<CR>
 
 command! -nargs=0 JiraToggleIssueView :call issue_view#toggle(utils#get_key())
 command! -nargs=* Jira :call Jira(<q-args>)
+command! -nargs=0 -bar JiraUpdateUserCache :unlet! g:jira_users | call api#get_users({-> utils#echo("Finished updating user cache")})
 
 function Jira(...) abort
 	if !exists("g:jira_base_url")

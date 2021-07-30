@@ -842,7 +842,6 @@ function issue_view#setup() abort
 	command! -buffer -bar -nargs=? JiraLink :call <SID>link_issue(b:jira_issue.key, <f-args>)
 	command! -buffer -bar -nargs=0 JiraChangeType :call <SID>change_issue_type(b:jira_issue.key)
 	command! -buffer -bar -nargs=0 JiraAssignToEpic :call <SID>assign_issue_to_epic(b:jira_issue.key)
-	command! -buffer -bar -nargs=0 JiraUpdateUserCache :unlet! g:jira_users | call api#get_users()
 	command! -buffer -bar -nargs=0 JiraViewRaw :exe "edit " . utils#cache_file(b:jira_issue.key . ".json")
 endfunction
 
