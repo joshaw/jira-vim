@@ -8,7 +8,6 @@ function s:jira_curl(callback, url, ...) abort
 
 	let full_cmd = [
 		\ "curl",
-		\ "--user", utils#get_username() . ":" . utils#get_password(),
 		\ "--header", "Content-Type: application/json",
 		\ "--header", "Accept: application/json",
 		\ "--compressed",
@@ -17,6 +16,14 @@ function s:jira_curl(callback, url, ...) abort
 		\ "--show-error",
 		\ "--stderr", "-",
 	\ ] + [full_url] + a:000
+
+	let username = utils#get_username()
+	let password = utils#get_password()
+	if !empty(username) && !empty(password)
+		let user_flag = username . ":" . password
+		call insert(full_cmd, "--user", 1)
+		call insert(full_cmd, user_flag, 2)
+	endif
 
 	let a:callback.stdout_buffered = 1
 	let jobid = jobstart(full_cmd, a:callback)

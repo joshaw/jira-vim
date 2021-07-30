@@ -16,6 +16,11 @@ command! -nargs=0 JiraToggleIssueView :call issue_view#toggle(utils#get_key())
 command! -nargs=* Jira :call Jira(<q-args>)
 
 function Jira(...) abort
+	if !exists("g:jira_base_url")
+		echoerr "Configuration not complete, missing g:jira_base_url"
+		return
+	endif
+
 	for progname in ["curl", "fmt"]
 		if ! executable(progname)
 			echoerr "Required executable, " . progname . ", was not found"

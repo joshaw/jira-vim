@@ -25,11 +25,11 @@ function utils#get_issue_url(key) abort
 endfunction
 
 function utils#get_username() abort
-	return g:jira_username
+	return get(g:, "jira_username", "")
 endfunction
 
 function utils#get_password() abort
-	return g:jira_password
+	return get(g:, "jira_password", "")
 endfunction
 
 function utils#get_agile_url() abort
@@ -83,9 +83,9 @@ function s:get_myself() abort
 		let s:display_name = get(a:data, "displayName", -1)
 		let s:account_id = get(a:data, "accountId", -1)
 		if s:display_name != -1 && s:account_id != -1 && ! empty(a:fname)
-			let a:data.username = g:jira_username
+			let a:data.username = utils#get_username()
 			call writefile([json_encode({
-				\ "username": g:jira_username,
+				\ "username": a:data.username,
 				\ "accountId": s:account_id,
 				\ "displayName": s:display_name,
 			\ })], a:fname)
@@ -99,7 +99,7 @@ function s:get_myself() abort
 	endif
 
 	if sort(keys(myself)) == ["accountId", "displayName", "username"]
-			\ && myself.username == g:jira_username
+			\ && myself.username == utils#get_username()
 		call s:set_myself(myself, "")
 	else
 		let jobid = api#get_myself({d -> s:set_myself(d, cache_file)})
