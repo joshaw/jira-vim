@@ -190,7 +190,7 @@ function s:format_issue(issue, opts) abort
 	let issue_history = []
 	if has_key(a:issue, "changelog")
 		call add(issue_history, "")
-		call add(issue_history, "History: {{" . "{")
+		call add(issue_history, "History: ⟪⟪")
 
 		let counter = 0
 		for histlog in a:issue.changelog.histories
@@ -222,7 +222,7 @@ function s:format_issue(issue, opts) abort
 				\ s:date(a:issue.fields.created),
 			\ ),
 			\ "      Created",
-			\ "  }}}",
+			\ "⟫⟫",
 		\ ])
 	endif
 
@@ -304,11 +304,11 @@ function s:format_issue(issue, opts) abort
 	let columns = winwidth(0)
 	let comment_entry = [
 		\ "",
-		\ "-- ".header_text.": {{{",
+		\ "-- ".header_text.": ⟪⟪",
 		\ "",
 	\ ] + body + [
 		\ "",
-		\ "-- End of comment }}}"
+		\ "-- End of comment ⟫⟫"
 	\ ]
 
 	let comments = []
@@ -503,10 +503,10 @@ endfunction
 
 function s:write_cmd_comment(key) abort
 	let start_marker = get(b:, "jira_comment_id", 0) > 0
-		\ ? search("^-- Edit comment: {{{$", "n")
-		\ : search("^-- Add comment: {{{$", "n")
+		\ ? search("^-- Edit comment: ⟪⟪$", "n")
+		\ : search("^-- Add comment: ⟪⟪$", "n")
 
-	let end_marker = search("^-- End of comment }}}$", "n")
+	let end_marker = search("^-- End of comment ⟫⟫$", "n")
 
 	if start_marker <= 0 || end_marker <= 0 || end_marker < start_marker
 		echo "You've changed the comment markers!"
@@ -578,7 +578,7 @@ function s:edit_comment(issue) abort
 		let jobid = issue_view#reload(a:issue.key)
 		call jobwait([jobid])
 
-		call search("^-- Edit comment: {{{")
+		call search("^-- Edit comment: ⟪⟪")
 
 		" 1 Open the fold,
 		" 2 move to the start of the comment and
@@ -767,7 +767,7 @@ endfunction
 
 function Foldtext() abort
 	let line = getline(v:foldstart)
-	let line = substitute(line,'^-- \|{{{$', '', 'g')
+	let line = substitute(line,'^-- \|⟪⟪$', '', 'g')
 	return line . '↴'
 endfunction
 
@@ -781,6 +781,7 @@ function issue_view#setup() abort
 	setlocal conceallevel=3
 	setlocal fillchars+=fold:\ 
 	setlocal foldmethod=marker
+	setlocal foldmarker=⟪⟪,⟫⟫
 	setlocal foldtext=Foldtext()
 	setlocal formatoptions=roqn
 	setlocal nolist
@@ -816,9 +817,9 @@ function issue_view#setup() abort
 	syntax match JiraCommentHeader '^\n❱ [a-zA-Z0-9 :-]\+ ago$'
 
 	syntax region JiraCommentEntry
-		\ start='^-- Add comment: {{{$'
-		\ start='^-- Edit comment: {{{$'
-		\ end='^-- End of comment }}}$'
+		\ start='^-- Add comment: ⟪⟪$'
+		\ start='^-- Edit comment: ⟪⟪$'
+		\ end='^-- End of comment ⟫⟫$'
 
 	nnoremap <buffer> <silent> <CR> :call <SID>preview_issue_under_cursor()<CR>
 	nnoremap <buffer> <silent> <C-]> :call issue_view#load(<SID>key_under_cursor())<CR>
