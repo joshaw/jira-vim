@@ -224,6 +224,9 @@ endfunction
 
 function api#get_users() abort
 	function! s:format_users(users) abort
+		if type(a:users) != v:t_list
+			return
+		endif
 		let users_dict = {}
 		for u in a:users
 			if u.accountType == "customer" || u.accountType == "app"

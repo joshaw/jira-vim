@@ -220,6 +220,9 @@ function list_view#format(list) abort
 endfunction
 
 function s:format_boards(boards) abort
+	if len(get(a:boards, "values", [])) == 0
+		return
+	endif
 	let headers = [["KEY", "NAME", "DISPLAY NAME", "TYPE"]]
 	let fmt_boards = map(a:boards.values, {k,v -> [
 		\ has_key(v.location, "projectId") ? v.location.projectKey : "-",
@@ -232,6 +235,9 @@ function s:format_boards(boards) abort
 endfunction
 
 function s:format_projects(projects) abort
+	if len(get(a:projects, "values", [])) == 0
+		return
+	endif
 	let headers = [["KEY", "NAME", "LEAD", "STYLE", "TYPE"]]
 	let fmt_projects = sort(map(a:projects.values,
 		\ {k,v -> [v.key, v.name, v.lead.displayName, v.style, v.projectTypeKey]}
@@ -241,6 +247,9 @@ function s:format_projects(projects) abort
 endfunction
 
 function s:format_versions(versions) abort
+	if len(get(a:versions, "values", [])) == 0
+		return
+	endif
 	let headers = [["NAME", "RELEASED", "START DATE", "RELEASE DATE", "ARCHIVED", "DESCRIPTION"]]
 	let fmt_versions = map(a:versions, {k,v -> [
 		\ v.name,
