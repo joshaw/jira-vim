@@ -9,7 +9,7 @@ augroup END
 
 "nnoremap <silent> <tab> :wincmd w<CR>
 nnoremap <silent> R :unlet! b:jira_comment_id <bar> call issue_view#reload(utils#get_key())<CR>
-nnoremap <silent> gx :call system(["xdg-open", utils#get_issue_url(utils#get_key())])<CR>
+nnoremap <silent> gx :call system([has("macunix") ? "open" : "xdg-open", utils#get_issue_url(utils#get_key())])<CR>
 nnoremap <silent> zv :call issue_view#toggle(utils#get_key())<CR>
 
 command! -nargs=0 JiraToggleIssueView :call issue_view#toggle(utils#get_key())
