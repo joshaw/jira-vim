@@ -60,6 +60,13 @@ list of issues and is used to navigate between issues.
                         Show a summary list of the versions for the given Jira
                         project.
 
+                                                *:JiraDownloadSearchResults*
+:JiraDownloadSearchResults
+                        Download (and cache) all issues from the current JQL
+                        search. This makes it easier to scroll through a list
+                        of issues without having to wait for them to be
+                        downloaded each time a new one is selected.
+
                                                 *jira_issue-list_maps*
 MAPS
 

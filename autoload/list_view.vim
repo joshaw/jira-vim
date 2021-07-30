@@ -274,6 +274,26 @@ function s:list_components(project) abort
 	endif
 endfunction
 
+function s:download_search_results() abort
+	let jobs = []
+	for issue in g:jira_query_data.issues
+		let jobid = api#get_issue({-> 0}, issue.key, 0)
+		call add(jobs, jobid)
+	endfor
+
+	let jobstatuses = jobwait(jobs, 0)
+	while 1
+		redraw
+		call filter(jobstatuses, {k,v -> v == -1})
+		if len(jobstatuses) == 0
+			echo "All download jobs done"
+			break
+		endif
+		echo "Waiting for " . len(jobstatuses) . " download jobs to complete"
+		let jobstatuses = jobwait(jobs, 200)
+	endwhile
+endfunction
+
 function s:show_current_user() abort
 	function! s:show_current_user_aux(user) abort
 		let items = []
@@ -350,6 +370,7 @@ function list_view#setup() abort
 	command! -buffer -nargs=0 JiraListProjects :call api#get_projects({projects -> s:format_projects(projects)})
 	command! -buffer -nargs=? JiraListVersions :call s:list_versions(<q-args>)
 	command! -buffer -nargs=? JiraListComponents :call s:list_components(<q-args>)
+	command! -buffer -nargs=0 JiraDownloadSearchResults :call s:download_search_results()
 	command! -buffer -nargs=0 JiraCurrentUser :call s:show_current_user()
 
 	augroup jira
