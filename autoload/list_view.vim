@@ -1,5 +1,5 @@
 function list_view#the() abort
-	return bufadd("jira-list-buffer")
+	return bufadd("jira-list")
 endfunction
 
 function list_view#set(query, data) abort
