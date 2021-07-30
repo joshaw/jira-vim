@@ -625,14 +625,17 @@ endfunction
 
 function s:change_issue_type(key) abort
 	call api#get_issue_edit_metadata(
-		\ {meta -> choose#issue_type(
-			\ {type -> api#set_issue_type(
-				\ {-> issue_view#reload(a:key)},
-				\ a:key,
-				\ type.id
-			\ )},
-			\ meta.fields.issuetype.allowedValues
-		\ )},
+		\ {meta -> (has_key(meta.fields, "issuetype") && has_key(meta.fields.issuetype, "allowedValues"))
+			\ ? choose#issue_type(
+				\ {type -> api#set_issue_type(
+					\ {-> issue_view#reload(a:key)},
+					\ a:key,
+					\ type.id
+				\ )},
+				\ meta.fields.issuetype.allowedValues
+			\ )
+			\ : utils#echo("No available issue types")
+		\ },
 		\ a:key
 	\ )
 endfunction
