@@ -198,13 +198,6 @@ function utils#clamp(str, len) abort
 		\ : (strcharpart(a:str, 0, a:len - 1) . "…")
 endfunction
 
-function utils#debug(str) abort
-	if get(g:, "jira_debug", 0)
-		"echo a:str
-		call writefile([a:str], "/tmp/tmp-jira", "a")
-	endif
-endfunction
-
 function! utils#human_bytes(bytes) abort
 	let bytes = a:bytes
 	let sizes = ['B', 'KB', 'MB', 'GB']

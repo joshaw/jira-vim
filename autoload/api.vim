@@ -24,7 +24,6 @@ function s:jira_curl(callback, url, ...) abort
 	if jobid < 0
 		echoerr "Executable not found, " . full_cmd[0]
 	endif
-	call utils#debug("Started job: " . s:jobid)
 	return jobid
 endfunction
 
@@ -47,7 +46,6 @@ function s:write_cache_and_callback(callback, filename, data) abort
 	if empty(a:data)
 		return
 	endif
-	call utils#debug("Writing cache file, " . a:filename)
 	call writefile([json_encode(a:data)], a:filename, "S")
 	call call(a:callback, [a:data])
 endfunction
